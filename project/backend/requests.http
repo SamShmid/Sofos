@@ -1,0 +1,462 @@
+@baseUrl = http://localhost:3000/api
+@invalidId = abc
+@fakeId = 507f1f77bcf86cd799439011
+
+
+### Health check -> 200 { ok: true }
+GET {{baseUrl}}/health
+
+# Auth Tests
+
+# @name loginWriter
+### Log in as the seeded writer -> 200, token + role:"writer"
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "username": "admin", "password": "changeme123" }
+
+# @name registerReader
+### Register a normal user -> 201, ALWAYS role:"reader"
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{ "username": "reader1", "password": "password123" }
+
+# @name loginReader
+### Log in as the reader -> 200, token + role:"reader"
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "username": "reader1", "password": "password123" }
+
+### Register duplicate username -> 409
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{ "username": "reader1", "password": "password123" }
+
+### Register validation: missing username -> 400
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{ "password": "password123" }
+
+### Register validation: password too short -> 400
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{ "username": "shortpass", "password": "123" }
+
+### Login validation: missing password -> 400
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "username": "admin" }
+
+### Login wrong password -> 401
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "username": "admin", "password": "wrongpassword" }
+
+# Workspace Tests
+
+### List WITHOUT token -> 401
+GET {{baseUrl}}/workspaces
+
+### List as READER -> 200 (Home first, rest alphabetical)
+GET {{baseUrl}}/workspaces
+Authorization: Bearer {{loginReader.response.body.token}}
+
+# @name listWorkspaces
+### List as WRITER -> 200
+GET {{baseUrl}}/workspaces
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Create as READER -> 403
+POST {{baseUrl}}/workspaces
+Authorization: Bearer {{loginReader.response.body.token}}
+Content-Type: application/json
+
+{ "name": "Reader Should Fail" }
+
+# @name createWorkspace
+### Create as WRITER -> 201
+POST {{baseUrl}}/workspaces
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "School" }
+
+### Create validation: missing name -> 400
+POST {{baseUrl}}/workspaces
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ }
+
+### Get one, valid -> 200
+GET {{baseUrl}}/workspaces/{{createWorkspace.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, invalid id -> 400
+GET {{baseUrl}}/workspaces/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, nonexistent -> 404
+GET {{baseUrl}}/workspaces/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Update, valid -> 200
+PATCH {{baseUrl}}/workspaces/{{createWorkspace.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "School (renamed)" }
+
+### Update as READER -> 403
+PATCH {{baseUrl}}/workspaces/{{createWorkspace.response.body.data._id}}
+Authorization: Bearer {{loginReader.response.body.token}}
+Content-Type: application/json
+
+{ "name": "Reader cannot rename" }
+
+### Update, invalid id -> 400
+PATCH {{baseUrl}}/workspaces/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "x" }
+
+### Update, nonexistent -> 404
+PATCH {{baseUrl}}/workspaces/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "x" }
+
+### Delete, invalid id -> 400
+DELETE {{baseUrl}}/workspaces/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Delete, nonexistent -> 404
+DELETE {{baseUrl}}/workspaces/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Delete the DEFAULT (Home) workspace -> 400 "cannot be deleted"
+# Home is always data[0] (getWorkspaces sorts isDefault first), so no pasting needed.
+# Requires the "List as WRITER" request above to have been sent first.
+DELETE {{baseUrl}}/workspaces/{{listWorkspaces.response.body.$.data[0]._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+
+#Project Tests
+
+# @name createProject
+### Create in "School" as WRITER -> 201
+POST {{baseUrl}}/projects
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "Final Project", "workspace": "{{createWorkspace.response.body.data._id}}" }
+
+### Create as READER -> 403
+POST {{baseUrl}}/projects
+Authorization: Bearer {{loginReader.response.body.token}}
+Content-Type: application/json
+
+{ "name": "Reader project", "workspace": "{{createWorkspace.response.body.data._id}}" }
+
+### Create validation: missing workspace -> 400
+POST {{baseUrl}}/projects
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "No workspace" }
+
+### Create: nonexistent workspace -> 400 "Workspace not found"
+POST {{baseUrl}}/projects
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "Ghost", "workspace": "{{fakeId}}" }
+
+### List all -> 200
+GET {{baseUrl}}/projects
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### List filtered by workspace -> 200
+GET {{baseUrl}}/projects?workspace={{createWorkspace.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, valid -> 200
+GET {{baseUrl}}/projects/{{createProject.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, invalid id -> 400
+GET {{baseUrl}}/projects/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, nonexistent -> 404
+GET {{baseUrl}}/projects/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Update, valid -> 200
+PATCH {{baseUrl}}/projects/{{createProject.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "Final Project (v2)" }
+
+### Update, invalid id -> 400
+PATCH {{baseUrl}}/projects/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "x" }
+
+### Update, nonexistent -> 404
+PATCH {{baseUrl}}/projects/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "x" }
+
+### Delete, invalid id -> 400
+DELETE {{baseUrl}}/projects/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Delete, nonexistent -> 404
+DELETE {{baseUrl}}/projects/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+
+#Note Tests
+
+### Create with NEITHER -> 201, lands in Home
+POST {{baseUrl}}/notes
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Loose note", "content": "# Markdown\nNo workspace -> Home." }
+
+# @name createNoteInWorkspace
+### Create in "School" -> 201
+POST {{baseUrl}}/notes
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Workspace note", "content": "Filed under School.", "workspace": "{{createWorkspace.response.body.data._id}}" }
+
+# @name createNoteInProject
+### Create in project -> 201, workspace auto-set to project's workspace
+POST {{baseUrl}}/notes
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Project note", "content": "Inherits School.", "project": "{{createProject.response.body.data._id}}" }
+
+### Create as READER -> 403
+POST {{baseUrl}}/notes
+Authorization: Bearer {{loginReader.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Reader note" }
+
+### Create validation: missing title -> 400
+POST {{baseUrl}}/notes
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "content": "No title" }
+
+### Create: bad project ref -> 400
+POST {{baseUrl}}/notes
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Bad project", "project": "{{fakeId}}" }
+
+### List -> 200 (alphabetical by title)
+GET {{baseUrl}}/notes
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### List filtered by project -> 200
+GET {{baseUrl}}/notes?project={{createProject.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, valid -> 200
+GET {{baseUrl}}/notes/{{createNoteInWorkspace.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, invalid id -> 400
+GET {{baseUrl}}/notes/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, nonexistent -> 404
+GET {{baseUrl}}/notes/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Update (move into project -> workspace re-derived) -> 200
+PATCH {{baseUrl}}/notes/{{createNoteInWorkspace.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Moved to project", "project": "{{createProject.response.body.data._id}}" }
+
+### Update, invalid id -> 400
+PATCH {{baseUrl}}/notes/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "x" }
+
+### Update, nonexistent -> 404
+PATCH {{baseUrl}}/notes/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "x" }
+
+### Delete as READER -> 403
+DELETE {{baseUrl}}/notes/{{createNoteInProject.response.body.data._id}}
+Authorization: Bearer {{loginReader.response.body.token}}
+
+### Delete as WRITER, valid -> 204
+DELETE {{baseUrl}}/notes/{{createNoteInProject.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Delete, invalid id -> 400
+DELETE {{baseUrl}}/notes/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Delete, nonexistent -> 404
+DELETE {{baseUrl}}/notes/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+
+#Task Tests
+
+# @name createTask
+### Create in project -> 201 (completed defaults false)
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Write the README", "content": "Fill in skeleton.", "project": "{{createProject.response.body.data._id}}" }
+
+### Create validation: completed not boolean -> 400
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Bad completed", "completed": "yes" }
+
+### Create as READER -> 403
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{loginReader.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Reader task" }
+
+### List -> 200
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, valid -> 200
+GET {{baseUrl}}/tasks/{{createTask.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, invalid id -> 400
+GET {{baseUrl}}/tasks/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Get one, nonexistent -> 404
+GET {{baseUrl}}/tasks/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Toggle completed -> 200
+PATCH {{baseUrl}}/tasks/{{createTask.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "completed": true }
+
+### Update, invalid id -> 400
+PATCH {{baseUrl}}/tasks/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "completed": true }
+
+### Update, nonexistent -> 404
+PATCH {{baseUrl}}/tasks/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "completed": true }
+
+### Delete, valid -> 204
+DELETE {{baseUrl}}/tasks/{{createTask.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Delete, invalid id -> 400
+DELETE {{baseUrl}}/tasks/{{invalidId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Delete, nonexistent -> 404
+DELETE {{baseUrl}}/tasks/{{fakeId}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+
+#Cascading Delete
+
+# @name cascadeWs
+### Throwaway workspace -> 201
+POST {{baseUrl}}/workspaces
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "Throwaway" }
+
+# @name cascadeProject
+### Project inside it -> 201
+POST {{baseUrl}}/projects
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "name": "Temp project", "workspace": "{{cascadeWs.response.body.data._id}}" }
+
+### Note inside the project -> 201
+POST {{baseUrl}}/notes
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Temp note", "project": "{{cascadeProject.response.body.data._id}}" }
+
+### Task inside the project -> 201
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{loginWriter.response.body.token}}
+Content-Type: application/json
+
+{ "title": "Temp task", "project": "{{cascadeProject.response.body.data._id}}" }
+
+### Contents BEFORE delete (expect count:1) -> 200
+GET {{baseUrl}}/notes?workspace={{cascadeWs.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Delete the workspace -> 204 (cascades)
+DELETE {{baseUrl}}/workspaces/{{cascadeWs.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Notes gone AFTER delete (expect count:0) -> 200
+GET {{baseUrl}}/notes?workspace={{cascadeWs.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Tasks gone AFTER delete (expect count:0) -> 200
+GET {{baseUrl}}/tasks?workspace={{cascadeWs.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}
+
+### Project gone AFTER delete (expect count:0) -> 200
+GET {{baseUrl}}/projects?workspace={{cascadeWs.response.body.data._id}}
+Authorization: Bearer {{loginWriter.response.body.token}}

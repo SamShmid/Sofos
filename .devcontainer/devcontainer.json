@@ -1,0 +1,27 @@
+{
+  "name": "COSI 152A Web Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ritwickdey.LiveServer",
+        "GitHub.vscode-pull-request-github"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "files.autoSave": "afterDelay"
+      }
+    }
+  },
+  "postCreateCommand": "bash scripts/setup.sh",
+  "postStartCommand": "git config user.name \"${GIT_AUTHOR_NAME:-codespaces-cosi152a}\" && git config user.email \"${GIT_AUTHOR_EMAIL:-codespaces-cosi152a@users.noreply.github.com}\"",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "CommunityConnect Frontend",
+      "onAutoForward": "openPreview"
+    }
+  }
+}

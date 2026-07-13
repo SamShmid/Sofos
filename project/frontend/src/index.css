@@ -1,0 +1,173 @@
+:root {
+  --navy: #003478;
+  --navy-2: #00529b;
+  --border: #dde3ed;
+  --bg: #f4f6fa;
+  --surface: #fff;
+  --text: #1a1a1a;
+  --muted: #555;
+  --focus: #00b3e9;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+h1, h2, h3 { color: var(--navy); }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* --- app frame --- */
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-body { flex: 1; display: flex; }
+.main-content, .project-main { flex: 1; padding: 2rem; }
+
+/* --- header (navy bar) --- */
+.app-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 2rem; background: var(--navy); color: #fff;
+}
+.app-header h1 { margin: 0; color: #fff; font-size: 1.3rem; }
+.header-auth { display: flex; gap: 1rem; align-items: center; }
+.header-auth a { color: #b0c4e8; text-decoration: none; font-weight: 600; }
+.header-auth a:hover { color: #fff; }
+.header-auth button {
+  background: transparent; color: #fff; border: 2px solid #ffffff66;
+  border-radius: 999px; padding: 0.3rem 0.9rem; font-weight: 600; cursor: pointer;
+}
+.header-auth button:hover { background: #ffffff22; }
+
+/* --- sidebar with oval workspace bubbles --- */
+.sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); padding: 1rem; }
+.workspace-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.workspace-bubble { position: relative; }
+.workspace-bubble a {
+  display: block; width: 100%; text-align: center; text-decoration: none; font-weight: 600;
+  background: #fff; color: var(--navy); border: 2px solid var(--border);
+  border-radius: 999px; padding: 0.5rem 1rem;
+}
+.workspace-bubble a:hover { border-color: var(--navy-2); }
+.workspace-bubble a.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.workspace-bubble .delete-x { position: absolute; top: 50%; right: 0.6rem; transform: translateY(-50%); }
+
+/* --- buttons --- */
+.add-btn {
+  background: #fff; color: var(--navy); border: 2px solid var(--border);
+  border-radius: 999px; padding: 0.4rem 1rem; font-weight: 600; cursor: pointer;
+  margin-top: 0.75rem;
+}
+.add-btn:hover { border-color: var(--navy-2); }
+
+/* sidebar "+" : small oval, centered under the bubbles, name-sized text */
+.sidebar .add-btn {
+  display: block; width: fit-content; margin: 0.5rem auto 0;
+  background: #fff; color: var(--navy);
+  border: 2px solid var(--border); border-radius: 999px;
+  font-size: 1rem; font-weight: 600; padding: 0.35rem 1.1rem; cursor: pointer;
+}
+.sidebar .add-btn:hover { border-color: var(--navy-2); }
+
+.form-actions button, .note-view-head button, .note-editor button {
+  background: var(--navy); color: #fff; border: 2px solid var(--navy);
+  border-radius: 6px; padding: 0.45rem 1.1rem; font-weight: 600; cursor: pointer;
+}
+.form-actions button:hover, .note-view-head button:hover, .note-editor button:hover {
+  background: #fff; color: var(--navy);
+}
+
+/* --- project cards --- */
+.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.project-card {
+  background: var(--surface); border: 2px solid var(--border); border-radius: 8px;
+  padding: 1rem; cursor: pointer; position: relative;
+}
+.project-card:hover { border-color: var(--navy-2); }
+.project-card h3 { margin: 0 0 0.35rem; font-size: 1.15rem; }
+.project-card p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+/* --- project page: stack + main --- */
+.project-stack { width: 280px; background: var(--surface); border-right: 1px solid var(--border); padding: 1rem; overflow: auto; }
+.project-stack > a { display: inline-block; color: var(--navy); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem; }
+.project-stack > a:hover { text-decoration: underline; }
+.project-title-btn {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  background: none; border: none; color: var(--navy); font-weight: 700;
+  font-size: 1.2rem; padding: 0.5rem 0;
+}
+
+.task-list, .note-list { list-style: none; margin: 0.5rem 0; padding: 0; }
+.task-item { display: flex; gap: 0.5rem; align-items: flex-start; position: relative; padding: 0.4rem 0; }
+.task-item .task-body { flex: 1; }
+.task-item h4 { margin: 0; color: var(--text); }
+.task-item p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.task-item.completed h4 { text-decoration: line-through; color: #999; }
+
+.note-list-item { display: flex; justify-content: space-between; align-items: center; }
+.note-list-item > button:first-child {
+  flex: 1; text-align: left; background: none; border: none; cursor: pointer;
+  color: var(--navy); font-weight: 600; padding: 0.3rem 0;
+}
+.selected { text-decoration: underline; }
+
+/* --- inputs --- */
+input, textarea {
+  width: 100%; padding: 0.6rem 0.75rem; font-size: 1rem; font-family: inherit;
+  border: 2px solid var(--border); border-radius: 6px; background: #fff;
+  margin-bottom: 0.6rem;
+}
+input[type="checkbox"] { width: auto; margin-bottom: 0; }
+label { display: block; font-weight: 600; margin: 0.5rem 0 0.3rem; }
+.task-form, .note-editor { margin-bottom: 0.75rem; }
+.note-content-input { min-height: 320px; font-family: ui-monospace, Consolas, monospace; }
+.form-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
+/* --- hover-to-delete --- */
+.delete-x {
+  visibility: hidden; border: none; background: transparent; cursor: pointer;
+  color: #a80000; font-size: 1.1rem; line-height: 1; padding: 0 0.25rem;
+}
+.project-card:hover .delete-x, .workspace-bubble:hover .delete-x,
+.task-item:hover .delete-x, .note-list-item:hover .delete-x { visibility: visible; }
+.project-card .delete-x { position: absolute; top: 0.4rem; right: 0.4rem; }
+
+/* --- rendered markdown --- */
+.note-view-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.note-view h1 { font-size: 1.8rem; }
+.note-view h2 { font-size: 1.4rem; }
+.note-view h3 { font-size: 1.15rem; }
+.note-view pre { background: #f4f3ec; padding: 0.75rem; border-radius: 6px; overflow: auto; }
+.note-view code { background: #f4f3ec; padding: 0.1rem 0.3rem; border-radius: 4px; }
+.note-view pre code { background: none; padding: 0; }
+.note-view table { border-collapse: collapse; }
+.note-view th, .note-view td { border: 1px solid var(--border); padding: 0.3rem 0.6rem; }
+.note-view blockquote { border-left: 3px solid var(--border); margin: 0.5rem 0; padding-left: 0.75rem; color: var(--muted); }
+
+/* --- modal --- */
+.modal-backdrop { position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--surface); padding: 1.5rem; border-radius: 8px; min-width: 340px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; }
+.modal-head button { background: none; border: none; font-size: 1.3rem; cursor: pointer; }
+
+/* --- error text --- */
+[role="alert"] {
+  background: #ffe0e0; color: #a80000; border: 2px solid #f5a8a8;
+  border-radius: 6px; padding: 0.5rem 0.75rem; margin: 0.4rem 0; font-size: 0.9rem;
+}
+
+/* --- footer --- */
+footer { padding: 1rem 2rem; border-top: 1px solid var(--border); text-align: center; color: var(--muted); }
+
+/* --- auth pages (centered card) --- */
+.auth { max-width: 380px; margin: 4rem auto; background: var(--surface); border: 2px solid var(--border); border-radius: 8px; padding: 1.5rem; }
+.auth h2 { margin-top: 0; text-align: center; }
+.auth button[type="submit"] {
+  width: 100%; margin-top: 0.75rem; background: var(--navy); color: #fff;
+  border: 2px solid var(--navy); border-radius: 6px; padding: 0.55rem; font-weight: 600; cursor: pointer;
+}
+.auth button[type="submit"]:hover { background: #fff; color: var(--navy); }
+.auth p { text-align: center; }
