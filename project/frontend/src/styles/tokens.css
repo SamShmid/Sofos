@@ -1,0 +1,180 @@
+/* Design tokens — the live design config (Phase 14: blue trail-map identity;
+   Phase 30 finalized the spacing + font-size scales as part of this API).
+   Names are the API: index.css and all component styling read only these
+   custom properties, never a literal hex/font/radius/spacing/font-size rem.
+   Canonical values come from docs/design/*.html (design-language.html is
+   canonical; workspace-mock + roadmap-mock are the page references) per
+   PHASE_SPEC.md shared contract 1.
+
+   Breakpoint: 800px is a documented literal — CSS custom properties cannot be
+   read inside @media conditions, so every responsive rule in index.css hard-
+   codes `@media (max-width: 800px)` rather than referencing a token.
+
+   Phase 38 (dark mode stage 2): azure remains the only "you are here" spend
+   in BOTH themes. Dark values come from docs/design/mock2-dark.html
+   (canonical, transcribed exactly — not re-derived) and live in the
+   `:root[data-theme="dark"]` override block below; JS stamps the resolved
+   theme on the root element, so no `@media (prefers-color-scheme)` here. */
+
+:root {
+  color-scheme: light;
+
+  /* palette — navy does the everyday work; azure is spent ONLY on
+     "you are here" surfaces; red is destructive only. No green, no orange. */
+  --navy: #003478;
+  --navy-fill: #003478;     /* filled navy surfaces (P38 contract 4); dark diverges from --navy */
+  --navy-deep: #002A61;     /* btn-primary hover */
+  --navy-soft: #E9F0FB;     /* hover tint / done-state fills */
+  --border: #dde3ed;        /* = mist */
+  --bg: #F4F6FA;            /* = paper */
+  --surface: #FFFFFF;       /* = card */
+  --surface-raised: #FFFFFF; /* elevation token (P30 §B7 stage 1): equals
+                                 --surface in light theme; dark mode (deferred)
+                                 will diverge the two for raised chrome. */
+  --text: #16233A;          /* = ink */
+  --muted: #5C6670;
+  --accent: #0E9CD6;        /* azure — NOW SPENT: current waypoint, here-tag,
+                                current gcard border, next-waypoint name,
+                                suggester/suggestion accents */
+  --here-text: #0A6E97;     /* P68 (ui review F1): the roadmap pill's TEXT —
+                                --accent on --bg measured 2.88:1 at the pill's
+                                11.52px mono caps (AA needs 4.5:1). Same azure
+                                hue driven to ink depth (measures 5.2:1); the
+                                pill's border stays --accent, so azure keeps
+                                its one here-marker job. */
+  --focus: var(--accent);   /* unified with --accent per the mock's input focus */
+  --focus-ring-soft: rgba(0, 52, 120, 0.18); /* tour-highlight's halo (P30 §B7 stage 1) */
+  --overlay: rgba(0, 0, 0, 0.4); /* modal/tour dim backdrop (P30 §B7 stage 1) */
+  --hover-tint: #E9F0FB;    /* re-pointed to navy-soft; the rgba tint is retired */
+  --accent-soft: #E1F2FA;
+  --suggester-text: #0A6E97;
+  --active-mini: #CBD9EF;   /* .side-row.active .mini */
+  --qs-active-context: var(--muted); /* P68 (ui review F3): quick-switcher
+                                context label on the highlighted row — light's
+                                --muted passes there (5.1:1); dark diverges. */
+  --sugg-border: #B3DCF0;
+  --sugg-new-text: var(--navy-deep); /* P61 §4.2: margin-card "new" span — same value .mcard .new used inline before, just named so dark can diverge */
+  --toast-tick: #7FD4F2;
+  --toast-bg: var(--text); --toast-text: var(--white); /* inverted ink toast in light; dark remaps it to a raised surface */
+  --white: #fff;            /* text/icons on navy or dark fills */
+
+  /* status colors */
+  --danger: #B42318;
+  --danger-bg: #FBEAE9;
+  --danger-text: #B42318;
+  --danger-border: #ECC8C5;
+  --invite-bg: #fff6dd;
+  --invite-border: #f0d78c;
+  --invite-pending-bg: #fff0c2;
+  --invite-pending-text: #7a5b00;
+  --comment-bg: #FBF3DC;    /* P55: gold comment-anchor highlight, mock6 --gold-bg/--gold-border */
+  --comment-border: #C9A94E;
+  /* --op-create is deleted: op badges no longer color-code by operation. */
+
+  /* fonts — bundled npm packages (self-hosted, never fonts.googleapis.com) */
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-pill: 999px;
+  --radius-card: 12px;
+
+  /* spacing scale (P30: finalized, ≤8 stops, part of the token API) — every
+     padding/margin/gap/offset rem in index.css resolves to one of these,
+     either directly or via calc() composition for larger one-off structural
+     constants (container max-widths, min-width thresholds) where rounding
+     onto the small-rhythm stops would be a real behavior change, not a
+     cosmetic nuance. --space-5 is new (was previously skipped, like -7). */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.2rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* shadows */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 10px 30px rgba(0, 0, 0, 0.2);
+  --shadow-toast: 0 8px 24px rgba(16, 24, 40, 0.25);
+
+  /* z-index */
+  --z-modal: 1000;
+  --z-popover: 1050; /* Dropdown menu (P53) — above modal content, below toast */
+  --z-toast: 1100;
+  --z-drawer: 900;
+
+  /* type scale (P30: finalized, ≤6 stops, part of the token API) — every
+     font-size rem in index.css resolves to one of these. --font-size-xs is
+     also the legibility floor: no mono/meta text renders smaller than this. */
+  --font-size-xs: 0.72rem;
+  --font-size-sm: 0.9rem;
+  --font-size-md: 1.05rem;
+  --font-size-lg: 1.35rem;
+  --font-size-xl: 1.8rem;
+  --font-size-xxl: 2.1rem;
+}
+
+/* Dark theme override (Phase 38, stage 2). Values transcribed exactly from
+   docs/design/mock2-dark.html — canonical, not re-derived. Elevation reads
+   as a glow, not a shadow (--shadow-* pick up a faint accent-tinted glow
+   alongside the border/depth layers). --white, --toast-tick, --active-mini,
+   --focus, fonts, radii, spacing, and the type scale are untouched — fills
+   stay dark navy so on-fill colors (e.g. --white) keep working unchanged. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --navy: #7FB0F2;            /* text/glyph accent — #003478 fails contrast on dark */
+  --navy-fill: #0B3E85;       /* filled surfaces, lifted one stop */
+  --navy-deep: #1150A6;       /* btn-primary hover — hover lifts LIGHTER on dark */
+  /* P61 §4.2: alpha raised 0.14 -> 0.18 — measured against both consuming
+     backdrops (--bg for e.g. .focus-flash on a bare task-item, --surface for
+     .board-card.focus-flash): 0.14 gave 1.27:1/1.30:1 against them
+     (WCAG contrast ratio, used here as the "distinguishable" proxy), short of
+     the ≥1.3:1 floor; 0.18 gives 1.38:1/1.41:1. Every other --navy-soft
+     consumer (hover tints, chips, drag-over) just reads a hair richer. */
+  --navy-soft: rgba(127, 176, 242, 0.18);
+  --border: #29344A;
+  --bg: #0B1220;
+  --surface: #121B2E;
+  --surface-raised: #182640;  /* modals/toasts/switcher — elevation diverges (P30 note) */
+  --text: #E7ECF5;
+  --muted: #8E9BB3;
+  --accent: #46D0FF;
+  --here-text: var(--accent); /* P68: dark's accent already measured AA on --bg
+                                 (ui review F1) — pill renders exactly as before */
+  --qs-active-context: var(--active-mini); /* P68 (ui review F3): --muted composited
+                                 on the row highlight measured 3.78:1 — reuse the
+                                 established active-row meta color (7.4:1 there) */
+  --focus-ring-soft: rgba(70, 208, 255, 0.25);
+  --overlay: rgba(0, 0, 0, 0.6);
+  --hover-tint: rgba(127, 176, 242, 0.14);
+  --accent-soft: rgba(70, 208, 255, 0.14);
+  --suggester-text: #7FDBFF;
+  --sugg-border: rgba(70, 208, 255, 0.4);
+  --sugg-new-text: #7FB0F2;  /* P61 §4.2: = --navy's dark value — measured 7.69:1 on --mcard's --surface (was --navy-deep's 2.23:1, a legibility fail) */
+  --danger: #FF8A7A;
+  /* P61 §4.2: alpha raised 0.14 -> 0.20 — measured 1.19:1 against --bg
+     (below the ≥1.3:1 mark-background floor) at 0.14; 0.20 measures 1.32:1. */
+  --danger-bg: rgba(255, 107, 94, 0.20);
+  --danger-text: #FF8A7A;
+  /* P61 §4.2: was rgba(255, 107, 94, 0.4) — measured only 1.51:1 against the
+     danger-bg fill above (needs ≥3:1) even after danger-bg's own bump; every
+     alpha short of ~0.73 on that hue still failed, so this goes opaque
+     instead, matching --danger/--danger-text exactly (same precedent as
+     --comment-border going solid in dark) — measures 6.20:1 against the fill. */
+  --danger-border: #FF8A7A;
+  --invite-bg: rgba(240, 196, 80, 0.12);
+  --invite-border: rgba(240, 196, 80, 0.4);
+  --invite-pending-bg: rgba(240, 196, 80, 0.18);
+  --invite-pending-text: #F5D479;
+  --comment-bg: rgba(240, 196, 80, 0.14);  /* P55: derived from the existing dark gold */
+  --comment-border: #F5D479;
+  --toast-bg: var(--surface-raised); --toast-text: var(--text);
+  --shadow-card: 0 0 0 1px var(--border), 0 0 28px rgba(70, 208, 255, 0.05);
+  --shadow-modal: 0 0 0 1px var(--border), 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 32px rgba(70, 208, 255, 0.08);
+  --shadow-toast: 0 0 0 1px var(--border), 0 8px 24px rgba(0, 0, 0, 0.55);
+}

@@ -1,5 +1,4 @@
 {
   "editor.formatOnSave": true,
-  "files.autoSave": "afterDelay",
-  "liveServer.settings.root": "/project/frontend"
+  "files.autoSave": "afterDelay"
 }

@@ -6,3 +6,6 @@ node_modules/
 coverage/
 dist/
 build/
+.claude/
+project/backend/public/
+project/backend/logs/

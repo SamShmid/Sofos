@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — mock5: Suggestion cards (Google-Docs style)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #003478; --navy-deep: #002A61; --navy-soft: #E9F0FB;
+    --accent: #0E9CD6; --accent-soft: #E1F2FA;
+    --bg: #F4F6FA; --surface: #FFFFFF; --panel: #EEF2F8;
+    --text: #16233A; --muted: #5C6670; --border: #DDE3ED;
+    --danger: #B42318; --danger-bg: #FBEAE9; --danger-border: #ECC8C5;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+
+  .mock-banner { max-width: 1150px; margin: 0 auto; padding: 2.2rem 1.5rem 1rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  h1 { font-family: var(--font-display); font-size: 1.8rem; margin: .3rem 0 .4rem; }
+  .lede { color: var(--muted); max-width: 78ch; font-size: .92rem; margin: 0; }
+  .lede b { color: var(--navy); }
+
+  .mock-body { max-width: 1150px; margin: 1rem auto 3rem; padding: 0 1.5rem; display: flex; gap: 1.75rem; align-items: flex-start; }
+  .mock-canvas { flex: 1; min-width: 0; }
+  .legend { flex: none; width: 300px; position: sticky; top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.2rem; }
+  .legend h2 { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--navy); margin: 0 0 .9rem; }
+  .legend ol { list-style: none; margin: 0; padding: 0; }
+  .legend li { display: flex; gap: .6rem; margin-bottom: .95rem; font-size: .82rem; color: var(--muted); }
+  .legend b { display: block; font-weight: 600; margin-bottom: .1rem; color: var(--text); }
+  .legend-dot { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--navy); color: var(--navy); font-family: var(--font-mono); font-size: .68rem; font-weight: 600; display: flex; align-items: center; justify-content: center; background: var(--navy-soft); }
+  .note-dot { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); background: var(--accent-soft); font-family: var(--font-mono); font-size: .64rem; font-weight: 600; margin-left: .4rem; vertical-align: middle; }
+
+  .section-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--navy); font-weight: 500; margin: 1.6rem 0 .75rem; display: flex; align-items: center; gap: .5rem; }
+  .section-label::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+  .panel-band { background: var(--panel); border-radius: 12px; padding: .3rem 1.4rem 1.4rem; }
+
+  /* ---- the new card ---- */
+  .sugg2 { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--navy); border-radius: 10px; padding: .85rem 1rem .9rem; margin-bottom: .8rem; }
+  .sugg2-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .45rem; }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: .66rem; flex: none; }
+  .who-name { font-weight: 600; font-size: .88rem; }
+  .who-time { font-family: var(--font-mono); font-size: .68rem; color: var(--muted); }
+  .chip-op { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; padding: .15rem .5rem; border-radius: 999px; border: 1px solid var(--navy); color: var(--navy); background: var(--navy-soft); margin-left: auto; }
+  .sugg2-target { font-size: .88rem; margin: 0 0 .35rem; }
+  .sugg2-target b { font-weight: 600; }
+  .sugg2-target .rtype { color: var(--muted); }
+  .delta { margin: 0 0 .65rem; padding: .5rem .7rem; background: var(--panel); border-radius: 8px; font-size: .85rem; }
+  .delta .dk { color: var(--muted); }
+  .delta .sep { color: var(--border); margin: 0 .45rem; }
+  .sugg2-actions { display: flex; gap: .5rem; align-items: center; }
+  .btn { font-weight: 600; font-size: .82rem; border-radius: 8px; padding: .38rem .85rem; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--navy); font-family: var(--font-body); }
+  .btn-approve { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn-ghost { color: var(--muted); }
+  .diff { margin: 0 0 .65rem; background: var(--panel); border-radius: 8px; font-size: .84rem; overflow: hidden; }
+  .diff-line { padding: .18rem .7rem; white-space: pre-wrap; }
+  .diff-line.ctx { color: var(--muted); }
+  .diff-line.del { background: var(--danger-bg); color: var(--danger); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .diff-line.add { background: var(--navy-soft); color: var(--navy-deep); }
+  .diff-line.add::before { content: "+ "; font-family: var(--font-mono); font-size: .75em; }
+  .diff-line.del::before { content: "− "; font-family: var(--font-mono); font-size: .75em; }
+  .diff-fold { padding: .18rem .7rem; font-family: var(--font-mono); font-size: .7rem; color: var(--muted); background: var(--surface); border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); cursor: pointer; }
+  .diff-fold:hover { color: var(--navy); }
+  .approve-error { display: flex; gap: .5rem; align-items: baseline; background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); border-radius: 8px; padding: .5rem .7rem; font-size: .84rem; margin: 0 0 .65rem; }
+
+  /* my suggestions */
+  .row-list { list-style: none; margin: 0; padding: 0; }
+  .row-list li { display: flex; align-items: center; gap: .6rem; padding: .45rem .5rem; border-radius: 8px; font-size: .87rem; }
+  .row-list li:hover { background: var(--surface); }
+  .status-chip { font-family: var(--font-mono); font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; padding: .12rem .5rem; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); margin-left: auto; }
+  .status-chip.approved { border-color: #3F6B23; color: #3F6B23; background: #EAF5E3; }
+  .status-chip.rejected { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
+
+  .summary-chip { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); background: var(--panel); border-radius: 999px; padding: .18rem .6rem; }
+  .note-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.4rem; }
+  .note-frame h3 { font-family: var(--font-display); margin: 0 0 .2rem; }
+  .review-bar { display: flex; align-items: center; gap: .7rem; background: var(--navy-soft); border: 1px solid var(--border); border-radius: 8px; padding: .5rem .8rem; font-size: .84rem; margin: .6rem 0 1rem; }
+  .review-bar b { color: var(--navy); }
+  .review-bar .btn { padding: .25rem .6rem; font-size: .76rem; }
+  .note-p { margin: 0 0 .8rem; font-size: .92rem; max-width: 62ch; }
+  .hunk { position: relative; border-radius: 6px; padding: .1rem .2rem; }
+  .hunk .del { background: var(--danger-bg); color: var(--danger); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .hunk .add { background: var(--navy-soft); color: var(--navy-deep); font-weight: 500; }
+  .hunk-controls { display: inline-flex; gap: .25rem; margin-left: .4rem; vertical-align: middle; }
+  .hunk-controls button { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: .72rem; line-height: 1; }
+  .hunk-controls .ok { color: #3F6B23; border-color: #BEDFA6; }
+  .hunk-controls .no { color: var(--danger); border-color: var(--danger-border); }
+  .hunk-resolved { font-family: var(--font-mono); font-size: .68rem; color: #3F6B23; background: #EAF5E3; border-radius: 999px; padding: .1rem .5rem; margin-left: .4rem; vertical-align: middle; }
+  .review-layout { display: flex; gap: 1.2rem; align-items: flex-start; }
+  .review-text { flex: 1; min-width: 0; }
+  .review-margin { flex: none; width: 270px; display: flex; flex-direction: column; gap: .7rem; }
+  .mcard { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .7rem .8rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); font-size: .84rem; }
+  .mcard.active { border-color: var(--navy); box-shadow: 0 4px 12px rgba(0,52,120,.14); }
+  .mcard-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; }
+  .mcard-head .avatar { width: 22px; height: 22px; font-size: .6rem; }
+  .mcard-head .who-name { font-size: .82rem; }
+  .mcard-head .who-time { font-size: .64rem; }
+  .mcard-kind { font-family: var(--font-mono); font-size: .6rem; letter-spacing: .06em; text-transform: uppercase; margin-left: auto; color: var(--muted); }
+  .mcard .old { color: var(--danger); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .mcard .new { color: var(--navy-deep); background: var(--navy-soft); border-radius: 4px; padding: 0 .2rem; }
+  .mcard-actions { display: flex; gap: .4rem; margin-top: .5rem; }
+  .mcard-actions .btn { padding: .22rem .6rem; font-size: .74rem; }
+  .mcard-reply { border: none; background: none; color: var(--muted); font-size: .74rem; cursor: pointer; padding: 0; margin-top: .45rem; }
+  .mcard-reply:hover { color: var(--navy); }
+  .hl-comment { background: #FBF3DC; border-bottom: 2px dotted #C9A94E; border-radius: 3px; padding: .05rem .15rem; }
+  .comment-resolved { font-family: var(--font-mono); font-size: .64rem; color: var(--muted); }
+  .mode-strip { display: flex; align-items: center; gap: .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .6rem .9rem; margin-bottom: 1.2rem; font-size: .85rem; }
+  .mode-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; font-family: var(--font-mono); font-size: .68rem; }
+  .mode-toggle span { padding: .28rem .7rem; cursor: pointer; color: var(--muted); }
+  .mode-toggle .on { background: var(--navy); color: #fff; }
+  .mode-note { color: var(--muted); }
+
+  footer { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: .7rem; padding: 1.5rem; }
+  @media (max-width: 1000px) { .mock-body { flex-direction: column; } .legend { position: static; width: 100%; } }
+</style>
+</head>
+<body>
+
+<header class="mock-banner">
+  <span class="eyebrow">Proposal · mock5 · not implemented · Phase 52</span>
+  <h1>Suggestion cards — Google-Docs style</h1>
+  <p class="lede">Per Samuel's design: the <b>person's name sits top-left as the card's header</b> (like a Google Docs comment), the changes underneath in plain words with colons, Approve / Reject at the bottom. Numbered dots explained on the right.</p>
+</header>
+
+<div class="mock-body">
+  <div class="mock-canvas">
+
+    <div class="mode-strip">
+      <span class="mode-toggle"><span class="on">Editing</span><span>Suggesting</span></span><span class="note-dot">6</span>
+      <span class="mode-note">You have edit access — flip to Suggesting and your changes become cards below instead of landing directly.</span>
+    </div>
+
+    <div class="panel-band">
+      <div class="section-label">Needs your review · 4<span class="note-dot">1</span></div>
+
+      <!-- update -->
+      <div class="sugg2">
+        <div class="sugg2-head">
+          <span class="avatar">DA</span>
+          <span class="who-name">Dana</span>
+          <span class="who-time">2m ago</span>
+          <span class="chip-op">change</span>
+        </div>
+        <p class="sugg2-target"><span class="rtype">task</span> <b>"Finalize pricing page layout"</b><span class="note-dot">2</span></p>
+        <p class="delta"><span class="dk">due date:</span> Aug 20<span class="sep">·</span><span class="dk">priority:</span> low<span class="note-dot">3</span></p>
+        <div class="sugg2-actions">
+          <button class="btn btn-approve">Approve</button>
+          <button class="btn btn-ghost">Reject</button>
+        </div>
+      </div>
+
+      <!-- create -->
+      <div class="sugg2">
+        <div class="sugg2-head">
+          <span class="avatar">SB</span>
+          <span class="who-name">seedbot</span>
+          <span class="who-time">1h ago</span>
+          <span class="chip-op">new task</span>
+        </div>
+        <p class="sugg2-target">new <span class="rtype">task</span> <b>"Compress hero images before launch"</b></p>
+        <p class="delta"><span class="dk">priority:</span> medium</p>
+        <div class="sugg2-actions">
+          <button class="btn btn-approve">Approve</button>
+          <button class="btn btn-ghost">Reject</button>
+        </div>
+      </div>
+
+      <!-- note content edit: line diff -->
+      <div class="sugg2">
+        <div class="sugg2-head">
+          <span class="avatar">DA</span>
+          <span class="who-name">Dana</span>
+          <span class="who-time">40m ago</span>
+          <span class="chip-op">change</span>
+        </div>
+        <p class="sugg2-target"><span class="rtype">note</span> <b>"Copy freeze checklist"</b><span class="note-dot">7</span></p>
+        <p class="delta"><span class="summary-chip">edits in 3 places</span></p>
+        <div class="sugg2-actions">
+          <button class="btn btn-approve">View changes</button>
+          <span style="font-size:.8rem;color:var(--muted)">→ opens the note with each edit highlighted, approve or reject each one</span>
+        </div>
+      </div>
+
+      <!-- single-place note edit keeps the inline diff -->
+      <div class="sugg2">
+        <div class="sugg2-head">
+          <span class="avatar">SB</span>
+          <span class="who-name">seedbot</span>
+          <span class="who-time">1h ago</span>
+          <span class="chip-op">change</span>
+        </div>
+        <p class="sugg2-target"><span class="rtype">note</span> <b>"Positioning &amp; messaging"</b><span class="note-dot">8</span></p>
+        <div class="diff">
+          <div class="diff-line ctx">Who it's for, what it replaces, why now.</div>
+          <div class="diff-line del">Launch window: September.</div>
+          <div class="diff-line add">Launch window: early October (slipped one sprint).</div>
+        </div>
+        <div class="sugg2-actions">
+          <button class="btn btn-approve">Approve</button>
+          <button class="btn btn-ghost">Reject</button>
+        </div>
+      </div>
+
+      <!-- rename with approval-time collision -->
+      <div class="sugg2">
+        <div class="sugg2-head">
+          <span class="avatar">DA</span>
+          <span class="who-name">Dana</span>
+          <span class="who-time">3h ago</span>
+          <span class="chip-op">change</span>
+        </div>
+        <p class="sugg2-target"><span class="rtype">project</span> <b>"Marketing site"</b></p>
+        <p class="delta"><span class="dk">name:</span> Launch site</p>
+        <p class="approve-error">⚠ Can't rename — a project named "Launch site" already exists here. The suggestion stays pending.<span class="note-dot">4</span></p>
+        <div class="sugg2-actions">
+          <button class="btn btn-approve">Approve</button>
+          <button class="btn btn-ghost">Reject</button>
+        </div>
+      </div>
+
+      <!-- delete -->
+      <div class="sugg2">
+        <div class="sugg2-head">
+          <span class="avatar">SB</span>
+          <span class="who-name">seedbot</span>
+          <span class="who-time">yesterday</span>
+          <span class="chip-op">removal</span>
+        </div>
+        <p class="sugg2-target">delete <span class="rtype">task</span> <b>"Refresh testimonial quotes"</b></p>
+        <div class="sugg2-actions">
+          <button class="btn btn-approve">Approve</button>
+          <button class="btn btn-ghost">Reject</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:2rem">The note in review mode — after clicking "View changes"<span class="note-dot">9</span></div>
+    <div class="note-frame">
+      <h3>Copy freeze checklist</h3>
+      <div class="review-bar">
+        <b>Dana's edits · 1 of 3 resolved</b>
+        <span style="flex:1"></span>
+        <button class="btn">Approve remaining</button>
+        <button class="btn btn-ghost">Reject remaining</button>
+        <button class="btn btn-ghost">Done</button>
+      </div>
+      <div class="review-layout">
+        <div class="review-text">
+          <p class="note-p">Everything below must be locked before the <span class="hl-comment">July 30 freeze</span>. Owners are on the hook for their own line.</p>
+          <p class="note-p">- hero banner copy<br>
+            - <span class="hunk"><span class="del">pricing page (waiting on legal)</span> <span class="add">pricing page — legal signed off Aug 14</span></span><br>
+            - <span class="hunk"><span class="add">countdown microcopy (new, owner: Dana)</span><span class="hunk-resolved">✓ applied</span></span><br>
+            - footer + social links</p>
+          <p class="note-p">Anything landing after the freeze slips to the v2.1 notes. <span class="hunk"><span class="del">No exceptions.</span> <span class="add">Exceptions need Samuel's sign-off.</span></span></p>
+        </div>
+        <div class="review-margin">
+          <div class="mcard">
+            <div class="mcard-head"><span class="avatar">SA</span><span class="who-name">samuel</span><span class="who-time">Aug 12</span><span class="mcard-kind">comment</span></div>
+            <div>Is July 30 still realistic after the legal delay? Maybe Aug 5.<span class="note-dot">11</span></div>
+            <button class="mcard-reply">Reply</button> <button class="mcard-reply">Resolve</button>
+          </div>
+          <div class="mcard active">
+            <div class="mcard-head"><span class="avatar">DA</span><span class="who-name">Dana</span><span class="who-time">40m ago</span><span class="mcard-kind">suggestion</span></div>
+            <div><span class="old">pricing page (waiting on legal)</span><br>→ <span class="new">pricing page — legal signed off Aug 14</span><span class="note-dot">10</span></div>
+            <div class="mcard-actions"><button class="btn btn-approve">Approve</button><button class="btn btn-ghost">Reject</button></div>
+          </div>
+          <div class="mcard">
+            <div class="mcard-head"><span class="avatar">DA</span><span class="who-name">Dana</span><span class="who-time">40m ago</span><span class="mcard-kind">suggestion</span></div>
+            <div><span class="old">No exceptions.</span><br>→ <span class="new">Exceptions need Samuel's sign-off.</span></div>
+            <div class="mcard-actions"><button class="btn btn-approve">Approve</button><button class="btn btn-ghost">Reject</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:2rem">What a suggester sees instead<span class="note-dot">5</span></div>
+    <div class="panel-band">
+      <div class="section-label">My suggestions · 3</div>
+      <ul class="row-list">
+        <li><span>change — task "Finalize pricing page layout"</span><span class="status-chip">pending</span><button class="btn btn-ghost" style="margin-left:.5rem">Retract</button></li>
+        <li><span>new task "Compress hero images before launch"</span><span class="status-chip approved">approved</span></li>
+        <li><span>change — project "Marketing site" (name: Launch site)</span><span class="status-chip rejected">rejected</span></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <aside class="legend">
+    <h2>What's new, in plain words</h2>
+    <ol>
+      <li><span class="legend-dot">1</span><span><b>Person-first cards</b>Avatar + name top-left, time next to it, kind label ("change" / "new task" / "removal") top-right in navy. The sentence "Dana proposes…" becomes the card's structure instead of prose.</span></li>
+      <li><span class="legend-dot">2</span><span><b>The target on its own line</b>What kind of thing and its name, bolded — no more hunting through a sentence.</span></li>
+      <li><span class="legend-dot">3</span><span><b>Only what changes, colon format</b>Your ruling: colons not arrows. Unchanged fields never shown; internal names never shown.</span></li>
+      <li><span class="legend-dot">4</span><span><b>Approval-time name check</b>Your new ruling both ways: a duplicate name is rejected when the suggester proposes it, AND re-checked at approval — if it collides by then, Approve shows this error and the card stays pending.</span></li>
+      <li><span class="legend-dot">5</span><span><b>Suggesters lose the fake review queue</b>Your ruling: they see their own list with statuses (pending / approved / rejected + Retract), never "Needs your review".</span></li>
+      <li><span class="legend-dot">7</span><span><b>Multi-place edits → View changes</b>Samuel's ruling: when one suggestion touches SEVERAL places in a note, the card doesn't offer all-or-nothing Approve/Reject — it says "edits in 3 places" with a View changes button that opens the note itself in review mode.</span></li>
+      <li><span class="legend-dot">8</span><span><b>Single-place edits stay on the card</b>One contiguous change still shows its little diff right on the card with plain Approve/Reject — no detour for the simple case.</span></li>
+      <li><span class="legend-dot">9</span><span><b>Review mode: highlights in the text, cards in the margin</b>Samuel's ruling: edits stay highlighted in place (struck-through old, highlighted new), but the approve/reject controls move OFF the text into a reserved right-hand column, Google-Docs style. Each margin card aligns with its highlight; clicking either focuses the other. Resolved edits show a quiet "applied" tag inline.</span></li>
+      <li><span class="legend-dot">10</span><span><b>Per-edit cards in the margin</b>One card per edit — proposer, time, the old → new text, Approve / Reject. Each edit is its own decision ("technically different suggestions, even in the same file" — Samuel). The top bar still offers Approve-remaining / Reject-remaining.</span></li>
+      <li><span class="legend-dot">11</span><span><b>Comments — new concept</b>Writers AND suggesters can attach a comment to any stretch of text. Comments never change the file; the commented text gets a soft gold highlight and the comment sits in the margin with Reply and Resolve. (Gold is a placeholder — needs Samuel's color ruling, since the palette reserves azure and bans orange.)</span></li>
+      <li><span class="legend-dot">6</span><span><b>Editing / Suggesting switch</b>Your ruling from the P48 round: writers can flip to Suggesting; their edits become cards; they may approve their own. Lives in the workspace/project header.</span></li>
+    </ol>
+  </aside>
+</div>
+
+<footer>sofos · design mock · docs/design/mock5-suggestion-cards.html · 2026-08</footer>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — mock2: WorkspacePage recomposition (B1 / B2 / B3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #003478; --navy-deep: #002A61; --navy-soft: #E9F0FB;
+    --accent: #0E9CD6; --accent-soft: #E1F2FA; --suggester-text: #0A6E97;
+    --bg: #F4F6FA; --surface: #FFFFFF; --panel: #EEF2F8;
+    --text: #16233A; --muted: #5C6670; --border: #DDE3ED;
+    --danger: #B42318; --danger-bg: #FBEAE9; --danger-border: #ECC8C5;
+    --sugg-border: #B3DCF0;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-pill: 999px; --radius-card: 12px;
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.06);
+
+    --tag-c0-bg:#E3F5F1; --tag-c0-border:#A8DED2; --tag-c0-text:#1B6F5F;
+    --tag-c1-bg:#EAF5E3; --tag-c1-border:#BEDFA6; --tag-c1-text:#3F6B23;
+    --tag-c2-bg:#FBF3D9; --tag-c2-border:#E9D48A; --tag-c2-text:#7A5B00;
+    --tag-c3-bg:#FBE9E1; --tag-c3-border:#EFBFA8; --tag-c3-text:#96431C;
+    --tag-c4-bg:#F3E6F5; --tag-c4-border:#D8AEDF; --tag-c4-text:#7A3182;
+    --tag-c5-bg:#FBE7EF; --tag-c5-border:#EFB6CC; --tag-c5-text:#9C2F58;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+  a { color: inherit; }
+
+  /* ============ mock chrome (not app UI) ============ */
+  .mock-banner { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 1.25rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  .mock-title { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; margin: 0.3rem 0 0.5rem; letter-spacing: -0.01em; }
+  .mock-lede { color: var(--muted); max-width: 74ch; margin: 0; font-size: 0.92rem; }
+  .mock-lede b { color: var(--navy); }
+  .mock-lede code { font-family: var(--font-mono); font-size: 0.85em; background: var(--navy-soft); color: var(--navy); padding: 0.05rem 0.35rem; border-radius: var(--radius-sm); }
+
+  .mock-body { max-width: 1480px; margin: 0 auto; padding: 0 1.5rem 4rem; display: flex; gap: 1.75rem; align-items: flex-start; }
+  .mock-canvas { flex: 1 1 1200px; max-width: 1200px; min-width: 0; }
+  .legend { flex: none; width: 280px; position: sticky; top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1.1rem 1.2rem; }
+  .legend h2 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin: 0 0 0.9rem; }
+  .legend ol { list-style: none; margin: 0; padding: 0; }
+  .legend li { display: flex; gap: 0.6rem; margin-bottom: 0.9rem; font-size: 0.82rem; color: var(--text); }
+  .legend li:last-child { margin-bottom: 0; }
+  .legend b { display: block; font-weight: 600; margin-bottom: 0.1rem; }
+  .legend .b-code { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent); }
+  .legend-dot {
+    flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--navy); color: var(--navy);
+    font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; display: flex; align-items: center; justify-content: center;
+    background: var(--navy-soft);
+  }
+  .note-dot {
+    display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
+    border: 1.5px solid var(--accent); color: var(--accent); background: var(--accent-soft);
+    font-family: var(--font-mono); font-size: 0.64rem; font-weight: 600; margin-left: 0.4rem; vertical-align: middle;
+  }
+
+  /* ============ app frame (this is the thing being mocked) ============ */
+  .app-frame { border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface); }
+  .app-header { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 1.5rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .wordmark .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--navy); display: inline-block; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-right a { font-size: 0.85rem; color: var(--text); text-decoration: none; font-weight: 500; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; }
+
+  .app-body { display: flex; align-items: stretch; min-height: 720px; }
+
+  /* ---- sidebar: B3 current-trail indent ---- */
+  aside.app-side { width: 236px; flex: none; padding: 1.4rem 0.85rem; border-right: 1px solid var(--border); background: var(--surface); }
+  .side-label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 0.6rem; margin: 1.1rem 0 0.35rem; }
+  .side-label:first-child { margin-top: 0; }
+  .side-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; border-radius: var(--radius-lg); text-decoration: none; color: var(--text); font-size: 0.88rem; font-weight: 500; }
+  .side-row:hover { background: var(--navy-soft); }
+  .side-row.active { background: var(--navy); color: #fff; }
+  .side-row .mini { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); }
+  .side-row.active .mini { color: #CBD9EF; }
+  .side-add { color: var(--navy) !important; font-weight: 600; }
+  /* the trail: an indented row nested directly under its top-level ancestor —
+     not a full tree, just the one active path (B3) */
+  .side-trail { margin: 0.15rem 0 0.15rem 0.75rem; padding-left: 0.6rem; border-left: 2px solid var(--border); }
+  .side-trail .side-row { font-size: 0.85rem; }
+
+  main.app-main { flex: 1; padding: 2rem 2.25rem 2.5rem; min-width: 0; }
+
+  /* ---- primary zone: identity (B2) ---- */
+  .breadcrumbs { display: flex; flex-wrap: wrap; align-items: baseline; margin-bottom: 0.6rem; font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); }
+  .crumb { color: var(--muted); text-decoration: none; }
+  .crumb:hover { color: var(--navy); }
+  .crumb-sep { margin: 0 0.3rem; }
+  .crumb-current { color: var(--muted); }
+
+  .page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  h1 { font-family: var(--font-display); font-size: 2rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; display: flex; align-items: center; gap: 0.6rem; }
+  .btn { font-weight: 600; font-size: 0.82rem; border-radius: var(--radius-lg); padding: 0.4rem 0.8rem; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--navy); font-family: var(--font-body); }
+  .btn:hover { background: var(--navy-soft); }
+  .page-desc { color: var(--muted); margin: 0 0 1.1rem; max-width: 68ch; font-size: 0.92rem; }
+
+  /* ---- one .chip base: role / status / tag / op share it (B1) ---- */
+  .chip {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.18rem 0.5rem; border-radius: var(--radius-pill); border: 1px solid var(--border);
+    color: var(--muted); background: var(--surface); display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .chip.role-owner { border-color: var(--navy); color: var(--navy); background: var(--navy-soft); }
+  .chip.role-writer { border-color: var(--navy); color: var(--navy); }
+  .chip.role-suggester { border-color: var(--accent); color: var(--suggester-text); background: var(--accent-soft); }
+  .chip.role-reader { border-style: dashed; } /* today unstyled; B1 gives it a deliberate quiet style */
+  .chip.status-pending { border-style: dashed; }
+  .chip.op { border-color: var(--accent); color: var(--accent); }
+  /* tag: quiet by default (no per-hue color) — hue is reserved for the active
+     filter-bar state, so cards stay calm and color only appears when it's
+     doing filtering work (B1's "deliberate quiet" note extended to tags) */
+  .chip.tag { text-transform: none; letter-spacing: 0.02em; }
+  .chip.tag.c0.active { background: var(--tag-c0-bg); border-color: var(--tag-c0-border); color: var(--tag-c0-text); }
+  .chip.tag.c1.active { background: var(--tag-c1-bg); border-color: var(--tag-c1-border); color: var(--tag-c1-text); }
+  .chip.tag.c2.active { background: var(--tag-c2-bg); border-color: var(--tag-c2-border); color: var(--tag-c2-text); }
+  .chip.tag.c3.active { background: var(--tag-c3-bg); border-color: var(--tag-c3-border); color: var(--tag-c3-text); }
+  .chip.tag.c4.active { background: var(--tag-c4-bg); border-color: var(--tag-c4-border); color: var(--tag-c4-text); }
+  .chip.tag.c5.active { background: var(--tag-c5-bg); border-color: var(--tag-c5-border); color: var(--tag-c5-text); }
+  button.chip.tag { cursor: pointer; font: inherit; }
+
+  /* ---- compact views row, replaces two stacked route-cards (B1 + B2) ---- */
+  .views-row {
+    display: flex; align-items: center; gap: 0; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 0.15rem 0.4rem; margin-bottom: 1.6rem;
+  }
+  .views-caption { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 0.7rem; }
+  .views-link { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text); font-weight: 600; font-size: 0.88rem; padding: 0.7rem 0.85rem; border-radius: var(--radius-lg); }
+  .views-link:hover { background: var(--navy-soft); }
+  .views-link .mini-route { display: inline-flex; gap: 2px; }
+  .views-link .mini-route i { width: 10px; height: 3px; border-radius: 2px; background: var(--border); }
+  .views-link .mini-route i.done { background: var(--navy); }
+  .views-link .mini-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); font-weight: 400; }
+  .views-sep { width: 1px; align-self: stretch; margin: 0.6rem 0; background: var(--border); }
+  .views-row .note-dot { margin-left: auto; margin-right: 0.4rem; }
+
+  .section-label {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--navy); font-weight: 500; margin: 2rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-label::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+  .section-label .btn { margin-left: 0.5rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; }
+  .pcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1rem 1.1rem; text-decoration: none; color: inherit; display: block; }
+  .pcard:hover { border-color: var(--navy); }
+  .pcard h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin: 0 0 0.3rem; }
+  .pcard p { font-size: 0.82rem; color: var(--muted); margin: 0 0 0.6rem; min-height: 2.3em; }
+  .pcard-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0 0 0.6rem; }
+  .pcard .meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); display: flex; gap: 0.8rem; }
+  .pcard .meta .done { color: var(--navy); }
+  .pcard-new { border-style: dashed; display: flex; align-items: center; justify-content: center; color: var(--navy); font-weight: 600; font-size: 0.88rem; min-height: 96px; background: none; cursor: pointer; font-family: var(--font-body); width: 100%; }
+  .pcard-new:hover { background: var(--navy-soft); }
+
+  .projects-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: -0.35rem 0 0.9rem; }
+  .projects-controls select { font-family: var(--font-body); font-size: 0.85rem; padding: 0.35rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); }
+  .tag-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+
+  /* ---- quiet secondary panel band: Links / Files / Needs-your-review share
+     one background, one section-header idiom, counts on every header (B1+B2) ---- */
+  .panel-band { margin-top: 2.2rem; background: var(--panel); border-radius: var(--radius-card); padding: 0.3rem 1.4rem 1.4rem; }
+  .panel-section { padding-top: 1.1rem; border-top: 1px solid var(--border); }
+  .panel-section:first-child { border-top: none; }
+  .panel-section .section-label { color: var(--navy); margin: 1rem 0 0.7rem; }
+  .panel-section .section-label::after { border-top-color: var(--border); }
+
+  .sugg { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius-lg); padding: 0.75rem 0.9rem; display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; }
+  .sugg .what { flex: 1; font-size: 0.86rem; min-width: 12rem; }
+  .sugg .what b { font-weight: 600; }
+  .sugg .who { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .btn-approve { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn-approve:hover { background: var(--navy-deep); }
+  .btn-reject { color: var(--muted); }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+  .row-list { list-style: none; margin: 0; padding: 0; }
+  .row-list li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-lg); }
+  .row-list li:hover { background: var(--surface); }
+  .row-list a { color: var(--text); font-weight: 500; font-size: 0.87rem; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; flex: 1; }
+  .row-list .fname { color: var(--text); font-weight: 500; font-size: 0.87rem; flex: 1; }
+  .row-list .meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .glyph { color: var(--navy); font-size: 0.85rem; width: 1.1rem; text-align: center; }
+  .add-inline { display: inline-block; margin-top: 0.3rem; color: var(--navy); font-weight: 600; font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.3rem 0.5rem; border-radius: var(--radius-lg); font-family: var(--font-body); }
+  .add-inline:hover { background: var(--surface); }
+
+  footer.mock-foot { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; padding: 2rem; }
+
+  @media (max-width: 1080px) {
+    .mock-body { flex-direction: column; }
+    .legend { position: static; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="mock-banner">
+  <span class="eyebrow">Proposal · mock2 · not implemented</span>
+  <h1 class="mock-title">WorkspacePage recomposition</h1>
+  <p class="mock-lede">
+    Visualizes <b>B1</b> (one component system), <b>B2</b> (two-tier page composition) and <b>B3</b> (navigation &amp; wayfinding)
+    against a realistic <code>Product Launch</code> workspace. Numbered dots correspond to the legend on the right.
+    Static mock — nothing here is wired up or implemented.
+  </p>
+</header>
+
+<div class="mock-body">
+  <div class="mock-canvas">
+    <div class="app-frame">
+      <header class="app-header">
+        <a class="wordmark" href="#"><span class="wp"></span>Sofos</a>
+        <div class="header-right"><a href="#">Settings</a><span class="avatar">AD</span></div>
+      </header>
+      <div class="app-body">
+        <aside class="app-side">
+          <div class="side-label">Yours</div>
+          <a class="side-row" href="#">Home <span class="mini">2</span></a>
+          <a class="side-row" href="#">Work <span class="mini">4</span></a>
+          <div class="side-trail">
+            <a class="side-row active" href="#">Product Launch <span class="mini">5</span><span class="note-dot">4</span></a>
+          </div>
+          <a class="side-row side-add" href="#">+ Workspace</a>
+          <div class="side-label">Shared with you</div>
+          <a class="side-row" href="#">Dana's Studio <span class="mini">reader</span></a>
+          <div class="side-label">System</div>
+          <a class="side-row" href="#">Trash <span class="mini">3</span></a>
+        </aside>
+
+        <main class="app-main">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a class="crumb" href="#">Home</a><span class="crumb-sep">/</span>
+            <a class="crumb" href="#">Work</a><span class="crumb-sep">/</span>
+            <span class="crumb-current">Product Launch</span>
+            <span class="note-dot">1</span>
+          </nav>
+
+          <div class="page-head">
+            <h1>Product Launch <span class="chip role-writer">writer</span></h1>
+            <button class="btn">History</button>
+          </div>
+          <p class="page-desc">Coordinating the web and mobile release across two teams. Shared with Dana as writer.<span class="note-dot">2</span></p>
+
+          <div class="views-row">
+            <span class="views-caption">Views</span>
+            <a class="views-link" href="#">
+              Roadmap
+              <span class="mini-route"><i class="done"></i><i class="done"></i><i></i><i></i><i></i></span>
+              <span class="mini-label">2 of 5</span>
+            </a>
+            <span class="views-sep"></span>
+            <a class="views-link" href="#">Board <span class="mini-label">See tasks by status</span></a>
+            <span class="note-dot">3</span>
+          </div>
+
+          <div class="section-label">Sub-workspaces · 1</div>
+          <div class="grid">
+            <a class="pcard" href="#">
+              <h3>Beta</h3>
+              <p>Early-access cohort — feature-flagged rollout before GA.</p>
+            </a>
+            <button type="button" class="pcard pcard-new">+ New sub-workspace</button>
+          </div>
+
+          <div class="section-label">Projects · 2 of 5<span class="note-dot">5</span></div>
+          <div class="projects-controls">
+            <select aria-label="Sort projects">
+              <option>A–Z</option>
+              <option>Newest</option>
+            </select>
+            <div class="tag-filter-bar">
+              <button type="button" class="chip tag c1 active">launch</button>
+              <button type="button" class="chip tag">web</button>
+              <button type="button" class="chip tag">mobile</button>
+              <button type="button" class="chip tag">growth</button>
+              <button type="button" class="chip tag">ops</button>
+              <button type="button" class="chip tag">content</button>
+              <span class="note-dot">6</span>
+            </div>
+          </div>
+          <div class="grid">
+            <a class="pcard" href="#">
+              <h3>Marketing Site</h3>
+              <p>Public site copy, pricing page, launch countdown banner.</p>
+              <div class="pcard-tags"><span class="chip tag">web</span><span class="chip tag c1 active">launch</span></div>
+              <span class="meta"><span>5 tasks</span><span class="done">2 done</span></span>
+            </a>
+            <a class="pcard" href="#">
+              <h3>App Store Listing</h3>
+              <p>Screenshots, description and keywords for the mobile release.</p>
+              <div class="pcard-tags"><span class="chip tag">mobile</span><span class="chip tag c1 active">launch</span></div>
+              <span class="meta"><span>4 tasks</span><span class="done">3 done</span></span>
+            </a>
+            <button type="button" class="pcard pcard-new">+ New project</button>
+          </div>
+
+          <div class="panel-band">
+            <div class="panel-section">
+              <div class="section-label">Needs your review · 1<span class="note-dot">7</span></div>
+              <div class="sugg">
+                <span class="chip op">create</span>
+                <span class="what">seedbot proposes a task: <b>"Compress hero images before launch"</b> in Marketing Site</span>
+                <span class="who">2m ago</span>
+                <button class="btn btn-approve">Approve</button>
+                <button class="btn btn-reject">Reject</button>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="twocol">
+                <div>
+                  <div class="section-label">Links · 2</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">↗</span><a href="#">Launch runbook</a><span class="meta">added Jul 19</span></li>
+                    <li><span class="glyph">↗</span><a href="#">Brand asset library</a><span class="meta">added Jul 20</span></li>
+                  </ul>
+                  <button class="add-inline">+ Link</button>
+                </div>
+                <div>
+                  <div class="section-label">Files · 1</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">⬒</span><span class="fname">launch-banner-v3.png</span><span class="meta">1.4 MB · Jul 21</span></li>
+                  </ul>
+                  <button class="add-inline">+ File</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <aside class="legend">
+    <h2>What this depicts</h2>
+    <ol>
+      <li><span class="legend-dot">1</span><span><b>Real breadcrumbs</b><span class="b-code">B3</span>Roadmap/Board hand-roll a single back link today; every page gets the full trail.</span></li>
+      <li><span class="legend-dot">2</span><span><b>Primary identity zone</b><span class="b-code">B2</span>Title, role chip and description read as one block — the reason this page exists, before any list.</span></li>
+      <li><span class="legend-dot">3</span><span><b>Compact views row</b><span class="b-code">B1 / B2</span>Roadmap + Board route-cards (today: two ~120px stacked hero cards) merge into one row.</span></li>
+      <li><span class="legend-dot">4</span><span><b>Sidebar current trail</b><span class="b-code">B3</span>Top-level list stays flat; the active nested workspace gets one indented "you are here" row under its top-level ancestor — not a full tree.</span></li>
+      <li><span class="legend-dot">5</span><span><b>Sub-workspaces + Projects dominate</b><span class="b-code">B2</span>The two sections this page actually exists for get the visual weight; everything else is demoted below.</span></li>
+      <li><span class="legend-dot">6</span><span><b>One chip system</b><span class="b-code">B1</span>Role/status/tag/op chips share one <code>.chip</code> base. Tag chips default to quiet/uncolored on cards — hue is spent only where it does filtering work, in the active filter bar.</span></li>
+      <li><span class="legend-dot">7</span><span><b>Quiet secondary panel band</b><span class="b-code">B1 / B2</span>Links, Files and Needs-your-review share one muted panel and one section-header idiom, every header carrying a <code>· N</code> count.</span></li>
+    </ol>
+  </aside>
+</div>
+
+<footer class="mock-foot">sofos · design mock · docs/design/mock2-workspace.html</footer>
+</body>
+</html>

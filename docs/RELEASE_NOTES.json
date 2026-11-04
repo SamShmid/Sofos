@@ -1,0 +1,85 @@
+[
+  {
+    "version": "v4.0.0",
+    "date": "2026-10-07",
+    "user": [
+      "The platform is now Sofos, with the new name carried through the app, API, documentation, images, and deployment configuration.",
+      "Workspaces are now simple top-level areas and the smallest sharing boundary. Everything inside a workspace is a project, and projects can contain subprojects at any depth.",
+      "The confusing General project is gone. Tasks, notes, goals, links, and files can live directly in a workspace or inside a project.",
+      "Projects can move between workspaces in the same account while keeping their complete subproject tree and content together.",
+      "Projects now have Active, Blocked, and Completed statuses. Archiving is separate, hidden by default, and reversible from the Archived tab.",
+      "Tasks now support real subtasks at any depth. Completing a parent with unfinished subtasks always asks before completing the whole task tree, and reopening a subtask reopens its completed parents.",
+      "Sharing is easier to reason about. Share an entire account or one workspace, and every project inside inherits that access.",
+      "Existing installations get a dry-run-first migration that converts nested workspaces to projects, removes General containers, preserves content, and reports sharing changes before anything is written."
+    ],
+    "agent": [
+      "Breaking container model. Workspaces are top-level only. Projects own all internal hierarchy through parentProject and ancestors, and content may use workspace directly with no project.",
+      "Project lifecycle uses status values active, blocked, and completed. Archive uses POST /projects/:id/archive and POST /projects/:id/restore, with archived projects excluded from normal lists and rollups.",
+      "Move a project tree with POST /projects/:id/move. Supply either a destination parentProject or a workspace with parentProject null. Moves are restricted to workspaces in the same account.",
+      "Tasks use parentTask and ancestors for true nesting. A parent completion with unfinished descendants returns INCOMPLETE_SUBTASKS until the caller repeats the update with completeSubtasks true.",
+      "Sharing scopes are now none for the whole account or workspace for one workspace. Project-level membership creation is rejected because projects inherit workspace access.",
+      "Share codes now use the SF prefix. The Sofos v4 migration preflights projected code collisions before any write.",
+      "Run npm run migrate:sofos-v4 with an explicit MONGODB_URI for the dry run. Apply only after reviewing the report, and add --promote-grants when legacy project or nested-workspace grants may be widened to their top-level workspace.",
+      "GET /api and GET /api/guide describe the revised surface. The OpenAPI document is version 4.0.0 and covers workspace content, nested projects, archive, move, nested tasks, and completion confirmation."
+    ]
+  },
+  {
+    "version": "v3.0.0",
+    "date": "2026-09-04",
+    "user": [
+      "A completely new note editor: one always-editable page with live Markdown preview — headings, lists, and task checkboxes render as you type — and autosave that warns instead of clobbering when the note changed somewhere else.",
+      "Comments on notes: select text and comment, reply in threads, resolve and reopen; comments anchor to the text and follow it as the note is edited (mobile gets a bottom-sheet reader).",
+      "Suggesting, Google-Docs style: flip a note to Suggesting and your edits become tracked changes shown word-by-word in place — deleted words struck through, proposed text inline — with margin cards to approve, reject, or retract. Each distinct edit is its own suggestion.",
+      "Unified undo: Cmd-Z and the Undo/Redo buttons walk one timeline of your typing and review actions — approvals, rejections, retracts, and comment resolves/deletes can all be undone.",
+      "Trash got smarter: deleting something takes its pending suggestions with it, and restoring brings exactly those back.",
+      "Pick a color per tag, everywhere tags appear.",
+      "Visual polish throughout: a calmer bounded note-page layout, dark-theme legibility fixes, and mobile fixes (roadmap pill, note switcher, comment sheet).",
+      "Under the hood: security hardening (username rules, security headers), request activity logs with automatic 30/60/90-day retention, and modernized ops (activity logging, hardening)."
+    ],
+    "agent": [
+      "Zero-knowledge onboarding: GET /api discovers the whole surface — a fresh agent reaches productive calls in about 4 requests instead of 14.",
+      "Note-content suggestions are hunk-based: propose an edit via POST /suggestions with a contentHunk (before/old/new/after); writers see it rendered word-level in place. Distinct edits should be proposed as separate suggestions.",
+      "Comments API: phrase-anchored comments and threaded replies on note content; anchors re-locate as the text changes, and a comment whose quoted text disappears is auto-resolved server-side.",
+      "Review undo endpoints: POST /suggestions/:id/unapprove | unreject | unretract and POST /comments/:id/unresolve | undelete — see GET /api/guide §11/§13 for the exact rules and 409 cases.",
+      "Suggestions share their target's lifecycle: deleting the target (or its container) soft-deletes pending suggestions, restore revives them, and acting on a suggestion whose target is gone returns 409.",
+      "Registration usernames are now restricted to letters, digits, dot, underscore, and hyphen, starting with a letter or digit — POST /auth/register returns 400 otherwise."
+    ]
+  },
+  {
+    "version": "v2.0.0",
+    "date": "2026-07-22",
+    "user": [
+      "File attachments: upload, download, and preview files, with automatic virus scanning before a file becomes usable.",
+      "Suggestions: give a teammate or agent the new \"suggester\" role and they can propose changes for a writer to approve or reject, without touching your data directly.",
+      "Sharing now works as invites (accept/decline) with an optional expiry date, instead of instant grants.",
+      "Self-service account deletion, with a full export of your data saved before anything is removed.",
+      "Kanban-style boards (To do / In progress / Done) for tasks, per project and rolled up per workspace.",
+      "Nested workspaces and projects, with move/organize tools and a tree picker.",
+      "Project tags plus workspace filter/sort, and task drag-to-reorder.",
+      "Redesigned interface (the blue \"trail-map\" look) across every page, including mobile."
+    ],
+    "agent": [
+      "New suggester role: read everything a reader can, and propose create/update/delete via POST /suggestions instead of writing directly — the recommended role for agents.",
+      "Chunked upload API (POST /uploads, PUT /uploads/:id/chunks/:n, POST /uploads/:id/finalize) with scan-status polling (pending_scan -> clean/infected).",
+      "DELETE /api/auth/me for self-service account deletion (password-reconfirmed).",
+      "GET /api/guide (authenticated) serves the full API guide; new agent accounts get an agentSetup handoff block with credentials, guide URL, and first-steps text.",
+      "Nested workspace/project containment: grants flow down to descendants; move endpoints and ?parent=/?tree=/?deep= list params.",
+      "Task status (todo/in_progress/done) and POST /tasks/reorder; unmatched /api/* now returns a JSON 404 envelope instead of an HTML page."
+    ]
+  },
+  {
+    "version": "v1.0.0",
+    "date": "2026-07-19",
+    "user": [
+      "First release: personal workspaces, projects, tasks, notes, goals, and links, organized under your own account.",
+      "Share your account, a workspace, or a project with another person (reader or writer) via a short share code — no emails or passwords to exchange.",
+      "Roadmap view for goals, full edit history with restore on notes/projects/workspaces, and a trash you can restore from or empty."
+    ],
+    "agent": [
+      "Agent accounts (isAgent: true at registration) work through shared grants only — no workspace of their own, authenticated the same way as human accounts (POST /api/auth/login).",
+      "Full REST API for workspaces/projects/tasks/notes/goals/links/memberships, documented endpoint-by-endpoint in docs/API_GUIDE.md.",
+      "effectiveRole is returned alongside every single-resource response so a caller always knows what it can do next.",
+      "Reader/writer roles only in this release, grantable at account-wide, workspace, or project scope — no suggestion/proposal system yet."
+    ]
+  }
+]

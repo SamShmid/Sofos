@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/.env*
+project/frontend/dist
+**/.DS_Store
+PHASE_SPEC.md
+PROJECT_TASKS.md
+scripts
+# Keep the v4 migration script in the image, but leave test harnesses out.
+project/backend/scripts/logRetention-harness.js
+project/backend/scripts/sofos-v4-test.js
+project/backend/scripts/sofos-v4-migration-test.js
+project/backend/logs
+docker-compose.yml

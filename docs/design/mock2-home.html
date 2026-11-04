@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — Overview mock (mock2-home)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* real tokens.css values, not a new palette — see docs/design/UX_PROPOSALS_2026-07-24.md B5+B3 */
+    --navy: #003478; --navy-deep: #002A61; --navy-soft: #E9F0FB;
+    --accent: #0E9CD6; --accent-soft: #E1F2FA; --suggester-text: #0A6E97;
+    --active-mini: #CBD9EF; --sugg-border: #B3DCF0;
+    --border: #DDE3ED; --bg: #F4F6FA; --surface: #FFFFFF; --text: #16233A; --muted: #5C6670;
+    --white: #fff; --danger: #B42318;
+    --invite-bg: #fff6dd; --invite-border: #f0d78c;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-pill: 999px; --radius-card: 12px;
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  .doc { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  .doc h1.doc-title { font-family: var(--font-display); font-size: 2rem; font-weight: 700; letter-spacing: -0.01em; margin: 0.25rem 0 0.4rem; }
+  .lede { color: var(--muted); max-width: 74ch; margin: 0 0 2rem; }
+  .lede b { color: var(--navy); }
+  .lede code { font-family: var(--font-mono); font-size: 0.85em; background: var(--navy-soft); padding: 0.1rem 0.35rem; border-radius: 4px; }
+
+  /* the callout system: navy numbered badges pinned to the mock, matched to a
+     notes list below — meta-annotation layer, not part of the app's own
+     visual language, so it deliberately borrows the .avatar idiom (navy
+     circle, mono numerals) rather than spending the azure accent on it. */
+  .ann-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%; flex: none;
+    background: var(--navy); color: var(--white);
+    font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700;
+    box-shadow: 0 0 0 3px var(--surface), 0 0 0 4px var(--border);
+  }
+  .ann-pin { position: absolute; top: -10px; right: -10px; z-index: 2; }
+  h1 .ann-badge { margin-left: 0.6rem; vertical-align: middle; }
+
+  /* ===== the mock itself — a framed device, styled 1:1 off index.css ===== */
+  .mock-shell { border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface); }
+  .browser-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.9rem; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .browser-bar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+  .browser-bar .url { margin-left: 0.5rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+  .app-header { display: flex; align-items: center; justify-content: flex-start; gap: 0.75rem; height: 56px; padding: 0 1.5rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .wordmark .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--navy); display: inline-block; }
+  .header-auth { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
+  .header-auth a { font-size: 0.86rem; color: var(--text); text-decoration: none; font-weight: 500; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: var(--white); display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.72rem; flex: none; }
+
+  .app-body { display: flex; min-height: 620px; }
+  .sidebar { width: 224px; flex: none; background: var(--surface); border-right: 1px solid var(--border); padding: 1.25rem 0.9rem; }
+  .side-overview {
+    display: flex; align-items: center; padding: 0.55rem 0.6rem; margin-bottom: 0.5rem;
+    border-radius: var(--radius-lg); border-bottom: 1px solid var(--border);
+    font-family: var(--font-display); font-size: 1.02rem; font-weight: 700;
+    color: var(--navy); text-decoration: none; background: var(--navy); color: var(--white); border-bottom-color: transparent;
+  }
+  .side-label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 0.6rem; margin: 1.1rem 0 0.35rem; }
+  .side-label:first-of-type { margin-top: 0; }
+  .side-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; border-radius: var(--radius-lg); color: var(--text); text-decoration: none; font-size: 0.87rem; font-weight: 500; }
+  .side-row:hover { background: var(--navy-soft); }
+  .side-add { color: var(--navy); font-weight: 600; text-decoration: none; display: block; padding: 0.4rem 0.6rem; font-size: 0.87rem; }
+  .mini { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); }
+
+  main { flex: 1; min-width: 0; padding: 2rem 2.25rem; }
+  .page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.25rem; }
+  main h1 { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+  .invite-banner { background: var(--invite-bg); border: 1px solid var(--invite-border); border-radius: var(--radius-lg); padding: 0.6rem 0.9rem; font-size: 0.85rem; margin: 0.75rem 0 0; }
+  .invite-banner a { color: var(--navy); font-weight: 600; }
+
+  .section-label { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; margin: 1.9rem 0 0.75rem; display: flex; align-items: center; gap: 0.6rem; }
+  .section-label::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+  .section-label .count-badge { background: var(--navy); color: var(--white); border-radius: var(--radius-pill); padding: 0.05rem 0.5rem; font-size: 0.68rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; }
+  .pcard { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1rem 1.1rem; text-decoration: none; color: inherit; display: block; }
+  .pcard:hover { border-color: var(--navy); }
+  .pcard h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin: 0 0 0.3rem; }
+  .pcard p { font-size: 0.82rem; color: var(--muted); margin: 0 0 0.7rem; min-height: 2.3em; }
+  .pcard .role-chip { margin-top: 0.2rem; }
+  .mini-route { display: inline-flex; align-items: center; gap: 3px; }
+  .mini-route i { width: 13px; height: 4px; border-radius: 2px; background: var(--border); display: inline-block; }
+  .mini-route i.done { background: var(--navy); }
+  .mini-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); margin-left: 0.5rem; }
+  .pcard-new { border-style: dashed; display: flex; align-items: center; justify-content: center; color: var(--navy); font-weight: 600; font-size: 0.88rem; min-height: 100px; }
+
+  .role-chip { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.18rem 0.5rem; border-radius: var(--radius-pill); border: 1px solid var(--border); color: var(--muted); background: var(--surface); display: inline-block; }
+  .role-chip.reader { border-color: var(--border); color: var(--muted); }
+  .role-chip.writer { border-color: var(--navy); color: var(--navy); }
+
+  /* ===== the roll-up panel — the fixed design for "Needs your review" ===== */
+  .rollup { position: relative; background: var(--accent-soft); border: 1px solid var(--sugg-border); border-radius: var(--radius-card); padding: 0.4rem 0.5rem; }
+  .rollup-row { display: flex; align-items: center; gap: 0.9rem; padding: 0.65rem 0.8rem; border-radius: var(--radius-lg); }
+  .rollup-row + .rollup-row { border-top: 1px dashed var(--sugg-border); }
+  .rollup-row .rr-what { flex: 1; min-width: 0; }
+  .rollup-row .rr-path { font-weight: 600; color: var(--text); font-size: 0.9rem; }
+  .rollup-row .rr-context { font-size: 0.76rem; color: var(--muted); margin-left: 0.4rem; }
+  .rollup-row .rr-count { font-family: var(--font-mono); font-size: 0.75rem; color: var(--suggester-text); white-space: nowrap; }
+  .btn { font-family: var(--font-body); font-weight: 600; font-size: 0.82rem; border-radius: var(--radius-lg); padding: 0.38rem 0.8rem; cursor: pointer; border: 1px solid transparent; }
+  .btn-ghost { background: transparent; color: var(--navy); border-color: var(--border); }
+  .btn-primary { background: var(--navy); color: var(--white); }
+
+  .empty { text-align: center; border: 1.5px dashed var(--border); border-radius: var(--radius-card); padding: 1.5rem 1rem; background: var(--surface); }
+  .empty p { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0 0; }
+
+  footer.mock-footer { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; padding: 1.25rem; border-top: 1px solid var(--border); }
+
+  /* ===== notes rail below the mock ===== */
+  .notes { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 0.9rem; max-width: 900px; }
+  .note-item { display: flex; gap: 0.85rem; align-items: flex-start; background: var(--navy-soft); border-radius: var(--radius-lg); padding: 0.9rem 1.1rem; }
+  .note-item .ann-badge { margin-top: 0.15rem; }
+  .note-item h4 { margin: 0 0 0.3rem; font-family: var(--font-body); font-size: 0.92rem; font-weight: 700; color: var(--text); }
+  .note-item p { margin: 0; font-size: 0.85rem; color: var(--muted); }
+  .note-item code { font-family: var(--font-mono); font-size: 0.82em; background: var(--surface); border: 1px solid var(--border); padding: 0.05rem 0.3rem; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <span class="eyebrow">Proposal · mock2-home · not implemented</span>
+  <h1 class="doc-title">Overview page — naming fix + the review roll-up (B3 / B5)</h1>
+  <p class="lede">Two independent fixes land on the same page. <b>B3</b>: the landing page's heading changes from <code>Home</code> to <b>Overview</b>, resolving its collision with the sidebar's <code>Overview</code> link and the workspace literally named <code>Home</code>. <b>B5</b>: "Needs your review" stops reading only the tenant root — a slice that's structurally almost always empty — and instead aggregates pending suggestion counts across every container you own, with a jump straight to each one. Numbered badges below are annotations, not app UI — see the notes at the bottom.</p>
+
+  <div class="mock-shell">
+    <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">sofos.app/</span></div>
+    <div class="app-header">
+      <a class="wordmark" href="#"><span class="wp"></span>Sofos</a>
+      <div class="header-auth"><a href="#">Settings</a><span class="avatar">AD</span></div>
+    </div>
+    <div class="app-body">
+      <aside class="sidebar">
+        <a href="#" class="side-overview">Overview</a>
+        <div class="side-label">Yours</div>
+        <a href="#" class="side-row">Home</a>
+        <a href="#" class="side-row">Ops</a>
+        <a href="#" class="side-row">Marketing site</a>
+        <a href="#" class="side-add">+ Workspace</a>
+        <div class="side-label">Shared with you</div>
+        <a href="#" class="side-row">Dana's Studio <span class="mini">reader</span></a>
+        <div class="side-label">System</div>
+        <a href="#" class="side-row">Trash <span class="mini">2</span></a>
+      </aside>
+      <main>
+        <div class="page-head">
+          <h1>Overview<span class="ann-badge">1</span></h1>
+        </div>
+        <p class="invite-banner">You have 1 pending invite — <a href="#">review it in Settings</a></p>
+
+        <div class="section-label">My workspaces · 3</div>
+        <div class="grid">
+          <a class="pcard" href="#">
+            <span class="ann-badge ann-pin">2</span>
+            <h3>Home</h3>
+            <p>Your default workspace</p>
+            <span class="mini-route"><i class="done"></i><i class="done"></i><i class="done"></i><i></i><i></i></span><span class="mini-label">3/5 goals</span>
+          </a>
+          <a class="pcard" href="#">
+            <h3>Ops</h3>
+            <p>Day-to-day operations and the internal roadmap</p>
+            <span class="mini-route"><i class="done"></i><i></i><i></i><i></i></span><span class="mini-label">1/4 goals</span>
+          </a>
+          <a class="pcard" href="#">
+            <h3>Marketing site</h3>
+            <p>Campaigns, launches, and the public site roadmap</p>
+          </a>
+          <a class="pcard pcard-new" href="#">+ New workspace</a>
+        </div>
+
+        <div class="section-label">Needs your review <span class="count-badge">3</span></div>
+        <div class="rollup">
+          <span class="ann-badge ann-pin">3</span>
+          <div class="rollup-row">
+            <div class="rr-what"><span class="rr-path">Website</span><span class="rr-context">project in Ops</span></div>
+            <span class="rr-count">2 pending</span>
+            <button class="btn btn-ghost">Review</button>
+          </div>
+          <div class="rollup-row">
+            <div class="rr-what"><span class="rr-path">Ops / Archive</span><span class="rr-context">nested workspace</span></div>
+            <span class="rr-count">1 pending</span>
+            <button class="btn btn-ghost">Review</button>
+          </div>
+        </div>
+
+        <div class="section-label">Shared with you · 2</div>
+        <div class="grid">
+          <a class="pcard" href="#">
+            <h3>Dana's Studio</h3>
+            <p>shared by Dana Reyes</p>
+            <span class="role-chip reader">reader</span>
+          </a>
+          <a class="pcard" href="#">
+            <h3>Client intake</h3>
+            <p>project in Ops · shared by Dana Reyes</p>
+            <span class="role-chip writer">writer</span>
+          </a>
+        </div>
+      </main>
+    </div>
+    <footer class="mock-footer">sofos · self-hosted · Samuel Shmidman @ 2026</footer>
+  </div>
+
+  <div class="notes">
+    <div class="note-item">
+      <span class="ann-badge">1</span>
+      <div>
+        <h4>Naming resolved: nav, page and workspace no longer collide</h4>
+        <p>Today the sidebar's app-level link already says <code>Overview</code> (a partial fix), but <code>HomePage.jsx</code> still renders <code>&lt;h1&gt;Home&lt;/h1&gt;</code> — while a real workspace is <em>also</em> named "Home." Three things, one word, no way to tell them apart in conversation. This mock changes only the page heading to <b>Overview</b>, matching the nav link that already agrees with it.</p>
+      </div>
+    </div>
+    <div class="note-item">
+      <span class="ann-badge">2</span>
+      <div>
+        <h4>The workspace keeps its own name — "Home"</h4>
+        <p>The default workspace is a real, distinct entity (every account gets one seeded on registration) and stays called <b>Home</b>, same as today. It just no longer has to share its name with the page it happens to sit on. Nothing about workspace naming or seeding changes.</p>
+      </div>
+    </div>
+    <div class="note-item">
+      <span class="ann-badge">3</span>
+      <div>
+        <h4>The roll-up fix — this panel finally means something</h4>
+        <p>Today <code>SuggestionsPanel</code> on this page is called with <code>container={ superWorkspace }</code> — i.e. only suggestions proposed directly at the tenant root. Real proposals almost always land inside a workspace or project underneath it, so this panel reads a structural, near-permanent "0 pending" — a false all-clear on the one page meant to catch it. The fix aggregates pending counts across <em>every</em> container you own (workspaces and projects, any depth) into one queue, each row jumping straight to that container's own suggestions list — including containers like <code>Ops / Archive</code> that aren't even in the top-level sidebar. The total also surfaces as a badge on the section label itself, so it's visible without opening the panel.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

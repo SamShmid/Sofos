@@ -1,173 +1,2050 @@
-:root {
-  --navy: #003478;
-  --navy-2: #00529b;
-  --border: #dde3ed;
-  --bg: #f4f6fa;
-  --surface: #fff;
-  --text: #1a1a1a;
-  --muted: #555;
-  --focus: #00b3e9;
-}
+@import "./styles/tokens.css";
+
+/* ===================== base / reset ===================== */
 
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
   color: var(--text);
   background: var(--bg);
 }
 
-h1, h2, h3 { color: var(--navy); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
 
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-
-/* --- app frame --- */
 .app { min-height: 100vh; display: flex; flex-direction: column; }
 .app-body { flex: 1; display: flex; }
-.main-content, .project-main { flex: 1; padding: 2rem; }
 
-/* --- header (navy bar) --- */
+/* ===================== type ===================== */
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-2);
+}
+h1 { font-size: var(--font-size-xxl); font-weight: 700; margin: 0; }
+
+.page-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-1); }
+/* Phase 44: page-level h1/h2 titles wrap (never truncate) — the flex sibling
+   (actions span) stays flex:none by not opting into shrink, so the title
+   alone gives way. Shared by .page-head (h1) and .note-view-head (h2, both
+   ProjectPage's description pane and NoteView). */
+.page-head h1, .note-view-head h2 { min-width: 0; overflow-wrap: anywhere; }
+.page-desc { color: var(--muted); margin: 0 0 calc(var(--space-6) + var(--space-1)); }
+
+.section-label {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--navy); font-weight: 500; margin: var(--space-8) 0 var(--space-3); display: flex; align-items: center; gap: var(--space-2);
+}
+.section-label::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+
+/* Phase 44: each crumb ellipsizes at a shared max-width so a deep/long
+   ancestor chain stays one line (per-surface decision — the CURRENT page
+   crumb, .crumb-current below, deliberately has no cap). .crumb is its own
+   inline-block box (not itself flex), so text-overflow applies cleanly. */
+.crumb { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); text-decoration: none; display: inline-block; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.crumb:hover { color: var(--navy); }
+
+.journey { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); overflow-wrap: anywhere; }
+.journey b { color: var(--navy); font-weight: 500; }
+
+.loading { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); }
+
+/* ===================== chrome (+ mobile drawer) ===================== */
+
 .app-header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 1rem 2rem; background: var(--navy); color: #fff;
+  /* flex-start + auto-margin (not space-between): the hamburger and wordmark
+     must read as one left cluster on mobile, never drift apart. */
+  display: flex; align-items: center; justify-content: flex-start; gap: var(--space-3);
+  height: 56px; padding: 0 var(--space-6);
+  background: var(--surface); border-bottom: 1px solid var(--border); color: var(--text);
 }
-.app-header h1 { margin: 0; color: #fff; font-size: 1.3rem; }
-.header-auth { display: flex; gap: 1rem; align-items: center; }
-.header-auth a { color: #b0c4e8; text-decoration: none; font-weight: 600; }
-.header-auth a:hover { color: #fff; }
+
+.wordmark {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--font-size-lg); color: var(--text);
+  display: flex; align-items: center; gap: var(--space-2); text-decoration: none;
+}
+.wordmark .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--navy); display: inline-block; }
+
+.header-auth { display: flex; align-items: center; gap: var(--space-4); margin-left: auto; }
+.header-auth a, .header-auth button { white-space: nowrap; }
+/* Phase 44: username link (dynamic) is the one long-text risk in this row —
+   min-width:0 + a generous cap so a long username/agent-suffix ellipsizes
+   instead of pushing the avatar/logout button off the header. */
+.header-auth a { font-size: var(--font-size-sm); color: var(--text); text-decoration: none; font-weight: 500; min-width: 0; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; }
+.header-auth a:hover { color: var(--navy); }
 .header-auth button {
-  background: transparent; color: #fff; border: 2px solid #ffffff66;
-  border-radius: 999px; padding: 0.3rem 0.9rem; font-weight: 600; cursor: pointer;
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-family: var(--font-body); font-size: var(--font-size-sm); font-weight: 500; color: var(--text);
 }
-.header-auth button:hover { background: #ffffff22; }
+.header-auth button:hover { color: var(--navy); }
 
-/* --- sidebar with oval workspace bubbles --- */
-.sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); padding: 1rem; }
-.workspace-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.workspace-bubble { position: relative; }
-.workspace-bubble a {
-  display: block; width: 100%; text-align: center; text-decoration: none; font-weight: 600;
-  background: #fff; color: var(--navy); border: 2px solid var(--border);
-  border-radius: 999px; padding: 0.5rem 1rem;
-}
-.workspace-bubble a:hover { border-color: var(--navy-2); }
-.workspace-bubble a.active { background: var(--navy); color: #fff; border-color: var(--navy); }
-.workspace-bubble .delete-x { position: absolute; top: 50%; right: 0.6rem; transform: translateY(-50%); }
-
-/* --- buttons --- */
-.add-btn {
-  background: #fff; color: var(--navy); border: 2px solid var(--border);
-  border-radius: 999px; padding: 0.4rem 1rem; font-weight: 600; cursor: pointer;
-  margin-top: 0.75rem;
-}
-.add-btn:hover { border-color: var(--navy-2); }
-
-/* sidebar "+" : small oval, centered under the bubbles, name-sized text */
-.sidebar .add-btn {
-  display: block; width: fit-content; margin: 0.5rem auto 0;
-  background: #fff; color: var(--navy);
-  border: 2px solid var(--border); border-radius: 999px;
-  font-size: 1rem; font-weight: 600; padding: 0.35rem 1.1rem; cursor: pointer;
-}
-.sidebar .add-btn:hover { border-color: var(--navy-2); }
-
-.form-actions button, .note-view-head button, .note-editor button {
-  background: var(--navy); color: #fff; border: 2px solid var(--navy);
-  border-radius: 6px; padding: 0.45rem 1.1rem; font-weight: 600; cursor: pointer;
-}
-.form-actions button:hover, .note-view-head button:hover, .note-editor button:hover {
-  background: #fff; color: var(--navy);
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--navy-fill); color: var(--white);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: var(--font-size-xs); flex: none;
 }
 
-/* --- project cards --- */
-.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
-.project-card {
-  background: var(--surface); border: 2px solid var(--border); border-radius: 8px;
-  padding: 1rem; cursor: pointer; position: relative;
+.menu-btn {
+  display: none; align-items: center; justify-content: center;
+  width: 44px; height: 44px; background: none; border: none; cursor: pointer;
+  color: var(--navy); font-size: var(--font-size-lg); border-radius: var(--radius-sm);
 }
-.project-card:hover { border-color: var(--navy-2); }
-.project-card h3 { margin: 0 0 0.35rem; font-size: 1.15rem; }
-.project-card p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.menu-btn:hover { background: var(--navy-soft); }
 
-/* --- project page: stack + main --- */
-.project-stack { width: 280px; background: var(--surface); border-right: 1px solid var(--border); padding: 1rem; overflow: auto; }
-.project-stack > a { display: inline-block; color: var(--navy); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem; }
-.project-stack > a:hover { text-decoration: underline; }
-.project-title-btn {
+.sidebar { width: 232px; flex: none; background: var(--surface); border-right: 1px solid var(--border); padding: var(--space-6) var(--space-4); overflow: auto; }
+
+.side-label {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); padding: 0 var(--space-2); margin: var(--space-5) 0 var(--space-1);
+}
+.side-label:first-child { margin-top: 0; }
+
+.side-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-2) var(--space-2); border-radius: var(--radius-lg);
+  color: var(--text); text-decoration: none; font-size: var(--font-size-sm); font-weight: 500;
+  background: none; border: none; cursor: pointer; width: 100%; text-align: left; font-family: var(--font-body);
+  /* Phase 44: the row name is a bare text node sharing this flex box with
+     .mini/.delete-x (no wrapper element to hang single-line ellipsis on —
+     verified in a real browser: text-overflow does nothing here since the
+     name isn't its own flex item). overflow-wrap:anywhere is the CSS-only
+     containment fallback: a long/unbroken name wraps within the row instead
+     of pushing past it, so .mini/.delete-x never get shoved out of view. */
+  overflow-wrap: anywhere;
+}
+.side-row:hover { background: var(--navy-soft); }
+.side-row.active { background: var(--navy-fill); color: var(--white); }
+.side-row.active .mini { color: var(--active-mini); }
+.side-row .delete-x { opacity: 0; pointer-events: none; }
+.side-row:hover .delete-x,
+.side-row:focus-within .delete-x { opacity: 1; pointer-events: auto; }
+
+.side-add {
   display: block; width: 100%; text-align: left; cursor: pointer;
-  background: none; border: none; color: var(--navy); font-weight: 700;
-  font-size: 1.2rem; padding: 0.5rem 0;
+  padding: var(--space-2) var(--space-2); border-radius: var(--radius-lg);
+  color: var(--navy); font-weight: 600; font-size: var(--font-size-sm); font-family: var(--font-body);
+  background: none; border: 1px dashed var(--border);
+}
+.side-add:hover { background: var(--navy-soft); border-color: var(--navy); }
+
+/* Phase 44: flex:none so a long sibling row name never squeezes the count/role badge. */
+.mini { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); flex: none; }
+
+.sidebar-backdrop {
+  position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
+  background: var(--overlay); z-index: calc(var(--z-drawer) - 1);
 }
 
-.task-list, .note-list { list-style: none; margin: 0.5rem 0; padding: 0; }
-.task-item { display: flex; gap: 0.5rem; align-items: flex-start; position: relative; padding: 0.4rem 0; }
-.task-item .task-body { flex: 1; }
-.task-item h4 { margin: 0; color: var(--text); }
-.task-item p { margin: 0; color: var(--muted); font-size: 0.9rem; }
-.task-item.completed h4 { text-decoration: line-through; color: #999; }
+/* min-width:0 so this flex child of .app-body can shrink below its content
+   width — without it, wide content (a long note/task body) blows the page out
+   horizontally instead of wrapping, most visibly on mobile. */
+.main-content { flex: 1; min-width: 0; padding: calc(var(--space-8) + var(--space-1)) calc(var(--space-8) + var(--space-2)); max-width: 1060px; }
 
-.note-list-item { display: flex; justify-content: space-between; align-items: center; }
-.note-list-item > button:first-child {
-  flex: 1; text-align: left; background: none; border: none; cursor: pointer;
-  color: var(--navy); font-weight: 600; padding: 0.3rem 0;
+/* Shared by TagColorPopover's swatch — bare so any consumer can opt in
+   without redeclaring it. */
+.selected { background: var(--navy-soft); border-radius: var(--radius-sm); }
+
+footer {
+  text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: var(--font-size-xs);
+  padding: var(--space-8); border-top: 1px solid var(--border); margin-top: calc(var(--space-6) * 2);
 }
-.selected { text-decoration: underline; }
 
-/* --- inputs --- */
+/* ===================== buttons / chips ===================== */
+
+.btn {
+  font-family: var(--font-body); font-weight: 600; font-size: var(--font-size-sm);
+  border-radius: var(--radius-lg); padding: var(--space-2) var(--space-4); cursor: pointer;
+  border: 1px solid transparent;
+  /* Themed neutral default so a modifier-less .btn never falls through to the
+     user-agent button surface (system gray that flips with color-scheme). Every
+     modifier below overrides both background and color. */
+  background: var(--surface-raised); color: var(--text);
+}
+.btn-primary { background: var(--navy-fill); color: var(--white); }
+.btn-primary:hover { background: var(--navy-deep); }
+.btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+.btn-ghost { background: transparent; color: var(--navy); border-color: var(--border); }
+.btn-ghost:hover { background: var(--navy-soft); }
+.btn-ghost:disabled { opacity: 0.5; cursor: default; }
+
+/* mock5's dedicated approve style (margin/suggestion cards) — same solid
+   navy fill as .btn-primary, just its own class so the approve action can
+   diverge later without touching every other primary button. --navy-fill
+   (not mock5's literal --navy) per the P38 fill/text-token split: --navy
+   diverges to a light glyph color in dark theme, which would make an
+   navy-background button unreadable there. */
+.btn-approve { background: var(--navy-fill); color: var(--white); border-color: var(--navy-fill); }
+.btn-approve:hover { background: var(--navy-deep); }
+.btn-approve:disabled { opacity: 0.5; cursor: default; }
+
+/* One danger button (P30): .btn-danger composes with .btn — no redeclared
+   base properties, just the color/border variant. The former byte-identical
+   duplicate rule is gone; its bare JSX usages are W2's job. */
+.btn-danger { background: transparent; color: var(--danger-text); border-color: var(--danger-border); }
+.btn-danger:hover { background: var(--danger-bg); }
+.btn-danger:disabled { opacity: 0.5; cursor: default; }
+
+/* Phase 44: flex:none — these small icon buttons sit in many flex rows next
+   to a shrinkable name/title; they must never be squeezed themselves. */
+.delete-x, .goal-edit-btn, .goal-drag-handle, .tools button {
+  background: none; border: none; cursor: pointer; color: var(--muted);
+  font-size: var(--font-size-sm); line-height: 1; padding: var(--space-1); border-radius: var(--radius-sm);
+  flex: none;
+}
+.delete-x:hover, .goal-edit-btn:hover, .goal-drag-handle:hover, .tools button:hover {
+  color: var(--navy); background: var(--navy-soft);
+}
+.goal-drag-handle { cursor: grab; touch-action: none; }
+.goal-drag-handle:active { cursor: grabbing; }
+.goal-marker:disabled { cursor: default; }
+
+/* opacity + pointer-events (not visibility) so these stay in the tab order
+   and can be revealed by keyboard focus, not just the mouse — visibility:hidden
+   removes an element from focus entirely, making it keyboard-unreachable. */
+.delete-x { opacity: 0; pointer-events: none; }
+.pcard:hover .delete-x, .pcard:focus-within .delete-x,
+.task-item:hover .delete-x, .task-item:focus-within .delete-x,
+.row-list li:hover .delete-x, .row-list li:focus-within .delete-x {
+  opacity: 1; pointer-events: auto;
+}
+/* P47 ruling 2: Revoke × (SHARING member rows) is always visible, not
+   hover-revealed like the rows above — phones have no hover. */
+.member-row .delete-x { opacity: 1; pointer-events: auto; }
+.pcard { position: relative; }
+.pcard .delete-x { position: absolute; top: var(--space-2); right: var(--space-2); opacity: 0; pointer-events: none; }
+.pcard:hover .delete-x, .pcard:focus-within .delete-x { opacity: 1; pointer-events: auto; }
+/* delete-x inside a gcard's .tools is revealed by the tools opacity ramp with
+   its ✎/⠿ siblings — exempt it from the global opacity:0 default. */
+.tools .delete-x { opacity: 1; pointer-events: auto; }
+
+/* One chip system (P30, joined by prio/due chips in P39): role/status/op/tag/
+   prio/due chips share this base recipe; each variant rule below keeps ONLY
+   its color/border override. */
+.role-chip, .status-chip, .tag-chip, .prio-chip, .due-chip {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--border);
+  color: var(--muted); background: var(--surface); display: inline-block;
+  /* Phase 44: chips never wrap internally (rule 5) — a chip is a fixed-shape
+     label, not reflowable content. */
+  white-space: nowrap;
+}
+.role-chip.owner { border-color: var(--navy); color: var(--navy); background: var(--navy-soft); }
+.role-chip.writer { border-color: var(--navy); color: var(--navy); }
+/* deliberate quiet variant (P30) — a subtle navy-soft tint so "reader" no
+   longer reads as an unstyled leftover next to owner/writer/suggester. */
+.role-chip.reader { border-color: var(--border); color: var(--muted); background: var(--navy-soft); }
+.role-chip.suggester { border-color: var(--accent); color: var(--suggester-text); background: var(--accent-soft); }
+.role-chip.pending { border-style: dashed; }
+
+.status-chip.pending { border-style: dashed; border-color: var(--invite-border); background: var(--invite-pending-bg); color: var(--invite-pending-text); }
+.status-chip.expired { background: var(--surface); color: var(--muted); }
+.status-chip.project-active { border-color: var(--navy); color: var(--navy); background: var(--navy-soft); }
+.status-chip.project-blocked { border-color: var(--danger-border); color: var(--danger-text); background: var(--danger-bg); }
+.status-chip.project-completed { border-color: var(--border); color: var(--muted); background: var(--panel); }
+
+.share-code {
+  font-family: var(--font-mono); font-size: var(--font-size-md); font-weight: 700; letter-spacing: 0.06em; color: var(--navy);
+  background: var(--surface); border: 1.5px dashed var(--navy); border-radius: var(--radius-lg);
+  padding: var(--space-1) var(--space-2); display: inline-block;
+}
+
+/* ===================== cards & rows ===================== */
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--space-4); }
+
+.pcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--space-4) var(--space-5); text-decoration: none; color: inherit; display: block; cursor: pointer; }
+.pcard:hover { border-color: var(--navy); }
+/* Phase 44: card name — single-line ellipsis (rule 2, identity text). h3 is
+   its own block-level box (not itself a flex container), so text-overflow
+   applies cleanly here. */
+.pcard h3 { font-size: var(--font-size-md); margin: 0 0 var(--space-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Phase 44: description — 2-line clamp (rule: project/workspace cards) +
+   overflow-wrap:anywhere so an unbroken token still breaks instead of
+   escaping the card before the clamp even kicks in. */
+.pcard p {
+  font-size: var(--font-size-sm); color: var(--muted); margin: 0 0 var(--space-3); min-height: 2.4em;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
+}
+.pcard .meta { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); display: flex; gap: var(--space-4); }
+.pcard .meta .done { color: var(--navy); }
+.pcard-action {
+  position: absolute; top: var(--space-2); right: var(--space-2); border: 0; border-radius: var(--radius-md);
+  background: var(--surface); color: var(--muted); cursor: pointer; padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.04em;
+  opacity: 0; pointer-events: none;
+}
+.pcard:hover .pcard-action, .pcard:focus-within .pcard-action { opacity: 1; pointer-events: auto; }
+.pcard-action:hover { color: var(--navy); background: var(--navy-soft); }
+
+.pcard-new {
+  border-style: dashed; display: flex; align-items: center; justify-content: center;
+  color: var(--navy); font-weight: 600; font-size: var(--font-size-sm); min-height: 108px;
+}
+.pcard-new:hover { background: var(--navy-soft); }
+
+.twocol { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); align-items: start; }
+/* Phase 44: grid children (Links/Files column wrappers) need min-width:0 to
+   shrink below their content's natural width — otherwise a long link/file
+   name can widen its column past the 1fr track and blow out the page. */
+.twocol > * { min-width: 0; }
+
+.row-list { list-style: none; margin: 0; padding: 0; }
+/* flex-wrap + a flex-basis on the title: in the wide workspace column everything
+   sits on one line, but in a narrow column (a .threecol track, ~300px) where the
+   title would otherwise be squeezed to 0px, the meta+action buttons drop to a
+   second line so the link/file NAME always stays visible. */
+.row-list li { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-2); border-radius: var(--radius-lg); }
+.row-list li:hover { background: var(--navy-soft); }
+/* min-width:0 is required alongside flex:1 + overflow:hidden — without it the
+   text column keeps its full content width and, in a narrow .threecol track, the
+   fixed siblings (glyph, meta, edit/delete) squeeze the link/file name to 0px. */
+.row-list a { color: var(--text); font-weight: 500; font-size: var(--font-size-sm); text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; flex: 1 1 calc(var(--space-8) * 4); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-list a:hover { text-decoration-color: var(--navy); }
+.row-list .fname { color: var(--text); font-weight: 500; font-size: var(--font-size-sm); flex: 1 1 calc(var(--space-8) * 4); min-width: 0; background: none; border: none; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-list .meta { flex: none; }
+.row-list .meta { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); }
+
+.glyph { color: var(--navy); font-size: var(--font-size-sm); width: var(--space-5); text-align: center; flex: none; }
+.empty .glyph { font-size: var(--font-size-lg); width: auto; }
+
+.add-inline {
+  display: inline-block; margin-top: var(--space-2); color: var(--navy); font-weight: 600; font-size: var(--font-size-sm);
+  background: none; border: none; cursor: pointer; padding: var(--space-1) var(--space-2); border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+}
+.add-inline:hover { background: var(--navy-soft); }
+
+.empty { text-align: center; border: 1.5px dashed var(--border); border-radius: var(--radius-card); padding: calc(var(--space-8) + var(--space-1)) var(--space-4); background: var(--surface); max-width: calc(var(--space-8) * 15); }
+.empty p { color: var(--muted); font-size: var(--font-size-sm); margin: var(--space-2) 0 var(--space-4); }
+
+/* ===================== forms ===================== */
+
+label {
+  display: block; font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); margin: var(--space-2) 0 var(--space-1);
+}
 input, textarea {
-  width: 100%; padding: 0.6rem 0.75rem; font-size: 1rem; font-family: inherit;
-  border: 2px solid var(--border); border-radius: 6px; background: #fff;
-  margin-bottom: 0.6rem;
+  width: 100%; font-family: var(--font-body); font-size: var(--font-size-sm); padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text);
+  margin-bottom: var(--space-2);
 }
-input[type="checkbox"] { width: auto; margin-bottom: 0; }
-label { display: block; font-weight: 600; margin: 0.5rem 0 0.3rem; }
-.task-form, .note-editor { margin-bottom: 0.75rem; }
-.note-content-input { min-height: 320px; font-family: ui-monospace, Consolas, monospace; }
-.form-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+input:focus, textarea:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+input[type="checkbox"] { width: auto; margin-bottom: 0; accent-color: var(--navy); }
 
-/* --- hover-to-delete --- */
-.delete-x {
-  visibility: hidden; border: none; background: transparent; cursor: pointer;
-  color: #a80000; font-size: 1.1rem; line-height: 1; padding: 0 0.25rem;
-}
-.project-card:hover .delete-x, .workspace-bubble:hover .delete-x,
-.task-item:hover .delete-x, .note-list-item:hover .delete-x { visibility: visible; }
-.project-card .delete-x { position: absolute; top: 0.4rem; right: 0.4rem; }
+.checkbox-label { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-2) 0; }
+.checkbox-label input { width: auto; }
 
-/* --- rendered markdown --- */
-.note-view-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-.note-view h1 { font-size: 1.8rem; }
-.note-view h2 { font-size: 1.4rem; }
-.note-view h3 { font-size: 1.15rem; }
-.note-view pre { background: #f4f3ec; padding: 0.75rem; border-radius: 6px; overflow: auto; }
-.note-view code { background: #f4f3ec; padding: 0.1rem 0.3rem; border-radius: 4px; }
-.note-view pre code { background: none; padding: 0; }
-.note-view table { border-collapse: collapse; }
-.note-view th, .note-view td { border: 1px solid var(--border); padding: 0.3rem 0.6rem; }
-.note-view blockquote { border-left: 3px solid var(--border); margin: 0.5rem 0; padding-left: 0.75rem; color: var(--muted); }
+.task-form, .note-editor { margin-bottom: var(--space-3); }
+.form-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
 
-/* --- modal --- */
-.modal-backdrop { position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; }
-.modal { background: var(--surface); padding: 1.5rem; border-radius: 8px; min-width: 340px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
-.modal-head { display: flex; justify-content: space-between; align-items: center; }
-.modal-head button { background: none; border: none; font-size: 1.3rem; cursor: pointer; }
+.hint { color: var(--muted); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+/* Phase 44: content rule — carries workspace/project names + role chips inline. */
+.shared-meta { color: var(--muted); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
 
-/* --- error text --- */
-[role="alert"] {
-  background: #ffe0e0; color: #a80000; border: 2px solid #f5a8a8;
-  border-radius: 6px; padding: 0.5rem 0.75rem; margin: 0.4rem 0; font-size: 0.9rem;
-}
-
-/* --- footer --- */
-footer { padding: 1rem 2rem; border-top: 1px solid var(--border); text-align: center; color: var(--muted); }
-
-/* --- auth pages (centered card) --- */
-.auth { max-width: 380px; margin: 4rem auto; background: var(--surface); border: 2px solid var(--border); border-radius: 8px; padding: 1.5rem; }
+.auth { max-width: 380px; margin: calc(var(--space-8) * 2) auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--space-6); box-shadow: var(--shadow-card); }
 .auth h2 { margin-top: 0; text-align: center; }
-.auth button[type="submit"] {
-  width: 100%; margin-top: 0.75rem; background: var(--navy); color: #fff;
-  border: 2px solid var(--navy); border-radius: 6px; padding: 0.55rem; font-weight: 600; cursor: pointer;
-}
-.auth button[type="submit"]:hover { background: #fff; color: var(--navy); }
+.auth button[type="submit"] { width: 100%; margin-top: var(--space-3); }
 .auth p { text-align: center; }
+.auth-reveal { text-align: center; }
+
+[role="alert"] {
+  background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border);
+  border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); margin: var(--space-2) 0; font-size: var(--font-size-sm);
+}
+
+/* ===================== roadmap (Phase 49: free canvas + mobile trail) ===================== */
+
+/* Shared coordinate space for cards, markers, and the wires SVG that
+   connects them — free canvas on desktop (see mobile override below for the
+   vertical-stack collapse). Height is set inline by RoadmapTrack on desktop
+   (measured content bottom + margin); mobile leaves it to normal flow. */
+.canvas {
+  position: relative; margin-top: calc(var(--space-8) + var(--space-2));
+  border: 1px solid var(--border); border-radius: var(--radius-card);
+  background: radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0);
+  background-size: 26px 26px;
+  overflow: hidden;
+}
+
+/* No CSS width/height/inset here on purpose: with no viewBox, either would
+   force the browser to stretch the drawn paths to fit a box that disagrees
+   with the SVG's own width/height attributes — the exact
+   preserveAspectRatio="none" scaling bug this phase kills. RoadmapTrack syncs
+   those attributes (pixel-true) to the canvas's measured size instead, so
+   1 SVG unit is always 1 real pixel and top/left:0 is all the CSS needs. */
+.rail { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; }
+.rail .base { fill: none; stroke: var(--border); stroke-width: 3; stroke-dasharray: 7 7; stroke-linecap: round; }
+.rail .done { fill: none; stroke: var(--navy); stroke-width: 3.5; stroke-linecap: round; }
+
+/* Marker rides the card's top edge (RoadmapTrack computes the point), not
+   in the card's own flow anymore. It sits ABOVE the card (as in mock4, whose
+   marker outranks the cards): centred on the top edge, so a card stacked over
+   it would swallow the whole lower half of the hit box — including the centre
+   point every click lands on, leaving the toggle button dead. */
+.goal-marker {
+  position: absolute; z-index: 3; transform: translate(-50%, -50%);
+  width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--navy); background: var(--surface);
+  display: flex; align-items: center; justify-content: center; color: var(--navy);
+  font-size: var(--font-size-sm); font-weight: 700; flex: none; cursor: pointer; padding: 0;
+}
+.goal-marker.completed { background: var(--navy-fill); color: var(--white); }
+.goal-marker.current { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 5px var(--accent-soft); }
+@keyframes goal-pulse {
+  0%, 100% { box-shadow: 0 0 0 5px var(--accent-soft); }
+  50% { box-shadow: 0 0 0 9px var(--accent-soft); }
+}
+
+/* Roadmap's own "you are here": the mock's pill, anchored 22px above the
+   marker. NOT the same class as .here-tag below (that one is SHARED with
+   WorkspacePage's tree-picker "you are here" row tag — a plain inline text
+   label there, wrong shape entirely for a floating badge here). z above
+   everything (even an overlapping card) so it always reads in full, per the
+   mock's approved anchoring revision; pointer-transparent like the mock's,
+   since it labels the marker rather than acting — that keeps it from
+   stealing a body-drag from whatever card passes under it. */
+.pill {
+  position: absolute; z-index: 4; transform: translate(-50%, -100%); pointer-events: none;
+  font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--here-text); font-weight: 500; white-space: nowrap;
+  background: var(--bg); border: 1px solid var(--accent); border-radius: var(--radius-pill);
+  padding: calc(var(--space-1) * 0.8) var(--space-3); box-shadow: var(--shadow-card);
+}
+
+/* SHARED class (WorkspacePage's Organize tree-picker "you are here" row tag)
+   — do not restyle for roadmap's own needs, hence .pill above instead. */
+.here-tag { font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-top: var(--space-2); font-weight: 500; }
+
+.gcard {
+  position: absolute; z-index: 2; width: 290px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-4); border-top: 3px solid var(--border);
+  box-shadow: var(--shadow-card); user-select: none; touch-action: none;
+}
+/* Grab cursor only where a body-drag is actually possible (writable) — a
+   reader/suggester's canvas stays inert, cursor default. */
+.gcard.draggable { cursor: grab; }
+.gcard.draggable:active { cursor: grabbing; }
+.gcard.dragging { box-shadow: var(--shadow-modal); z-index: 5; }
+/* Grip drag is hovering this card as a reorder drop target. */
+.gcard.drop-target { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gcard.done { border-top-color: var(--navy); }
+.gcard.current { border-top-color: var(--accent); }
+/* Phase 44 DEVIATION (documented, not silent): the spec calls for a 2-line
+   -webkit-line-clamp on this title, matching board-card h4. board-card h4
+   holds ONLY the title (chips are its siblings, outside the h4) so the clamp
+   applies cleanly there. This h3 is different — goal.title is a bare text
+   node sharing this flex row with .prio-chip/.tools (needed to keep tools
+   right-aligned), and -webkit-line-clamp requires display:-webkit-box, which
+   is incompatible with that flex layout without wrapping the title in its
+   own span (the TaskItem .task-title pattern) — a JSX change this phase
+   sanctions only for TaskItem. Verified in a real browser: text-overflow/
+   line-clamp on a bare flex-item text node does nothing (no wrapper to hang
+   it on). Falling back to the same overflow-wrap:anywhere containment used
+   for Sidebar rows, plus a ~2-line max-height cap so a pathological title
+   can't grow the card unboundedly — contained, not clamped-with-ellipsis.
+   Flagged for follow-up if Samuel wants the TaskItem-style span here too. */
+.gcard h3 {
+  font-size: var(--font-size-md); margin: 0 0 var(--space-1); display: flex; justify-content: space-between; gap: var(--space-2);
+  overflow-wrap: anywhere; max-height: calc(var(--font-size-md) * 1.3 * 2); overflow: hidden;
+}
+.gcard h3 .prio-chip { flex: none; }
+.gcard h3 .tools { display: flex; gap: var(--space-1); opacity: 0.35; flex: none; }
+.gcard:hover h3 .tools,
+.gcard:focus-within h3 .tools { opacity: 1; }
+/* Phase 44: goal description — content rule (wrap + anywhere). */
+.gcard p { margin: var(--space-1) 0; color: var(--muted); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+
+.mini-route { display: flex; align-items: center; gap: 3px; margin: var(--space-1) 0 var(--space-2); }
+.mini-route i { flex: 1; height: 4px; border-radius: 2px; background: var(--border); }
+.mini-route i.done { background: var(--navy-fill); }
+.mini-label { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); }
+
+/* .task is a <label> wrapping a checkbox row; the global form-label rule would
+   force it uppercase-mono, so reset to plain body text (these are task names). */
+.task { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); padding: var(--space-1) 0; font-family: var(--font-body); text-transform: none; letter-spacing: normal; color: var(--text); min-width: 0; }
+.task span { overflow-wrap: anywhere; min-width: 0; }
+.task input { accent-color: var(--navy); flex: none; }
+.task.donetask { color: var(--muted); text-decoration: line-through; }
+.addtask {
+  background: none; border: none; color: var(--navy); font-weight: 600; font-size: var(--font-size-sm); cursor: pointer;
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-md); margin-top: var(--space-1); font-family: var(--font-body);
+}
+.addtask:hover { background: var(--navy-soft); }
+
+/* ===================== lists carried over: tasks / notes / members ===================== */
+
+.task-list { list-style: none; margin: var(--space-2) 0; padding: 0; }
+.task-item { display: flex; gap: var(--space-2); align-items: flex-start; position: relative; padding: var(--space-2) 0; }
+/* display:contents keeps the wrapping <label> out of the flex layout entirely
+   (and out of the global label{} block/mono/uppercase reset) — the checkbox
+   renders exactly as before, it just now has an accessible name. */
+.task-check { display: contents; }
+/* min-width:0 lets the text column shrink below its content so long unbroken
+   strings wrap instead of forcing horizontal page overflow (esp. on mobile). */
+.task-item .task-body { flex: 1; min-width: 0; }
+/* Phase 44: h4 becomes the flex row (title + status/prio/due chips share the
+   line); the title TEXT moves into its own span (TaskItem.jsx's sanctioned
+   .task-title wrapper — the one place a bare flex-item text node genuinely
+   needs an element to hang single-line ellipsis on) so it alone truncates
+   while the chips stay put. Chips inside h4 are never squeezed. */
+.task-item h4 { margin: 0; color: var(--text); font-family: var(--font-body); font-weight: 600; font-size: var(--font-size-md); display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
+.task-item h4 .task-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-item h4 .status-chip, .task-item h4 .prio-chip, .task-item h4 .due-chip { flex: none; }
+.task-item p { margin: 0; color: var(--muted); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+.task-item.completed h4 { text-decoration: line-through; color: var(--muted); }
+.task-item.subtask { margin-left: calc(var(--task-depth) * var(--space-6)); }
+.task-item.subtask::before {
+  content: ""; position: absolute; left: calc(var(--space-3) * -1); top: 0; bottom: 0;
+  border-left: 1px solid var(--border);
+}
+.inline-toggle {
+  display: inline-flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3);
+  color: var(--muted); font-family: var(--font-body); font-size: var(--font-size-sm);
+  text-transform: none; letter-spacing: normal;
+}
+.inline-toggle input { accent-color: var(--navy); }
+
+.note-view-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+/* Long unbroken URLs/tokens in a note's title — wrap them, don't let a note
+   blow out the page width. Phase 60: the rendered-markdown prose sub-rules
+   (h1-h3/pre/code/table/blockquote) that used to live here are dead — the
+   note is one live CodeMirror surface now, not React-rendered HTML. */
+.note-view { overflow-wrap: break-word; min-width: 0; }
+
+.member-list { list-style: none; padding: 0; max-width: 560px; }
+/* One row primitive (P30): member-row now reads as the same borderless,
+   hover-tinted primitive as .row-list — Settings/History/Trash share the
+   Links/Files visual language. Internal layout (name/meta/actions) unchanged. */
+.member-row {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--space-3);
+  border-radius: var(--radius-lg); padding: var(--space-2) var(--space-2);
+}
+.member-row:hover { background: var(--navy-soft); }
+.member-row.history-row { align-items: flex-start; }
+/* Phase 44: the info span carries a username/scope sentence that can embed a
+   long project/workspace name — let it shrink and wrap rather than push
+   member-actions off (the row already wraps at mobile width; this is the
+   permanent desktop-width floor). */
+.member-row > span:first-child { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.member-actions { display: flex; align-items: center; gap: var(--space-2); flex: none; }
+/* Role dropdown must be wide enough for its longest option ("suggester") — in
+   the tight member-row a narrow trigger would otherwise clip its own label. */
+.member-actions .dropdown { width: auto; min-width: calc(var(--space-8) * 3.5); }
+
+.share-form { max-width: 380px; display: flex; flex-direction: column; gap: var(--space-2); }
+.share-form label { display: flex; flex-direction: column; gap: var(--space-1); }
+.share-form .form-actions { align-items: center; }
+.share-form button[type="submit"] { align-self: flex-start; }
+/* Visible press feedback on click, on top of .btn-primary:disabled's existing
+   opacity — between the two, "nothing happened" is never a plausible read. */
+.share-form button[type="submit"]:active:not(:disabled) { background: var(--navy-deep); transform: translateY(1px); }
+
+.danger-zone { border: 1px solid var(--danger-border); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5); margin-top: var(--space-8); }
+.danger-zone h3 { color: var(--danger-text); margin-top: 0; }
+
+.invite-banner {
+  background: var(--invite-bg); border: 1px solid var(--invite-border); border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4); margin: 0 0 var(--space-4); font-weight: 600;
+}
+.invite-banner a { color: var(--navy); }
+
+.upload-progress { margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--muted); }
+.upload-progress-track { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-pill); height: 6px; overflow: hidden; margin-top: var(--space-1); }
+.upload-progress-fill { background: var(--navy-fill); height: 100%; }
+
+/* ===================== modal / toast / confirm ===================== */
+
+.modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); background: var(--overlay); display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--surface-raised); padding: var(--space-6); border-radius: var(--radius-card); min-width: 340px; box-shadow: var(--shadow-modal); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; }
+/* Phase 44: heading rule — wrap, never truncate (own block box, not itself
+   flex, so this is a clean target; the close button next to it is fixed size). */
+.modal-head h3 { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.modal-head button { background: none; border: none; font-size: var(--font-size-lg); cursor: pointer; color: var(--muted); }
+.modal-head button:hover { color: var(--navy); }
+
+.toast-stack {
+  position: fixed; right: var(--space-6); bottom: var(--space-6); z-index: var(--z-toast);
+  display: flex; flex-direction: column; gap: var(--space-3); max-width: calc(var(--space-8) * 11);
+}
+.toast {
+  display: flex; align-items: center; gap: var(--space-3);
+  background: var(--toast-bg); color: var(--toast-text); border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4); font-size: var(--font-size-sm); box-shadow: var(--shadow-toast);
+  cursor: pointer;
+  /* Phase 44: content rule — .toast-stack already caps max-width (verified);
+     this stops a single long unbroken token (a URL/path in an error message)
+     escaping that cap before normal word-wrap would ever kick in. */
+  overflow-wrap: anywhere;
+}
+.toast--success::before { content: "✓"; color: var(--toast-tick); font-weight: 700; }
+.toast--error { border-left: 4px solid var(--danger); }
+
+/* Phase 44: confirm/modal body copy — wrap, paths may go multi-line (per-surface decision). */
+.confirm-message { margin: 0 0 var(--space-3); font-size: var(--font-size-sm); color: var(--muted); overflow-wrap: anywhere; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-4); }
+
+/* ===================== scan status chips (Phase 16) ===================== */
+.status-chip.file-scan-chip { border-style: dashed; }
+.status-chip.scan-failed, .status-chip.scan-infected {
+  border-color: var(--danger-border); color: var(--danger-text); background: var(--danger-bg);
+}
+
+/* ===================== media queries (last) ===================== */
+
+@media (max-width: 800px) {
+  .main-content { padding: var(--space-5); }
+
+  .menu-btn { display: inline-flex; }
+
+  .sidebar {
+    position: fixed; top: 56px; left: 0; bottom: 0; z-index: var(--z-drawer);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: var(--shadow-modal);
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .twocol { grid-template-columns: 1fr; }
+
+  /* P48: the action span never shrinks, so on a phone four buttons (History /
+     Edit / Move / Delete) squeezed the title into a ~110px column and the
+     wrap-anywhere rule broke it mid-word ("Webs|ite"). Give the title its own
+     full-width line and let the buttons wrap underneath. */
+  .page-head { flex-wrap: wrap; }
+  .page-head h1 { flex: 1 1 100%; }
+
+  /* P49: no free-drag canvas on a phone — cards fall back to normal block
+     flow (canvas positions ignored per spec) for a clean vertical trail.
+     No !important needed: this is a plain later-cascade override, not a
+     fight against an inline style (RoadmapTrack only sets left/top inline
+     when NOT mobile). Markers/pill stay position:absolute, now anchored off
+     each card's measured flow position instead of a desktop x/y. */
+  /* Top padding is headroom for a pill above the first card; the side padding
+     is the flow-layout twin of CANVAS_MIN_X — it keeps the pill, which centres
+     on a marker only 34px into the card, clear of the canvas's clipping edge. */
+  .canvas { padding: 48px var(--space-8) 0; }
+  /* relative, not static: cards must stay in normal flow yet still honour
+     z-index, or the wires SVG (z 0) paints over them instead of behind. */
+  .gcard { position: relative; width: 100%; margin-bottom: var(--space-6); touch-action: auto; }
+  .gcard:last-child { margin-bottom: 0; }
+  .gcard.draggable { cursor: default; } /* body-drag is desktop-only */
+
+  /* P64: the "you are here" pill floats 22px above its own card's top edge
+     (see .pill above) but is itself ~25px tall, so it actually extends ~47px
+     above that edge — well past the standard var(--space-6) gap to the card
+     before it, clipping into that card's bottom edge in a tight stack. Widen
+     the gap ONLY before the current card (never elsewhere, and desktop
+     ignores this — free-canvas cards aren't siblings in flow there) so the
+     pill's own box always clears the preceding card, measured live. */
+  .gcard:has(+ .gcard.current) { margin-bottom: calc(var(--space-6) + var(--space-8)); }
+
+  .delete-x, .goal-edit-btn, .tools button { padding: var(--space-3); }
+
+  /* Give sharing rows room on a phone: the info and the role-dropdown/actions
+     each get their own line instead of the trigger clipping. */
+  .member-row { flex-wrap: wrap; }
+  .member-actions { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .goal-marker.current { animation: goal-pulse 2.4s ease-in-out infinite; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar { transition: none; }
+}
+
+/* Post-P16 nits: distinct Overview root link; two-line title clamp */
+
+/* The app-level Overview link reads as a destination above the workspace
+   list, not another workspace row — display face, larger, navy. */
+.side-overview {
+  display: flex; align-items: center;
+  padding: var(--space-2) var(--space-2); margin-bottom: var(--space-2);
+  border-radius: var(--radius-lg); border-bottom: 1px solid var(--border);
+  font-family: var(--font-display); font-size: var(--font-size-md); font-weight: 700;
+  color: var(--navy); text-decoration: none;
+}
+.side-overview:hover { background: var(--navy-soft); }
+.side-overview.active { background: var(--navy-fill); color: var(--white); border-bottom-color: transparent; }
+
+/* Truncated titles in narrow columns were indistinguishable ("Design…" ×2):
+   clamp at two lines instead of one; full text stays in the title tooltip. */
+.row-list a, .row-list .fname {
+  white-space: normal;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+/* ===================== tag chips (Phase 23) ===================== */
+/* 8 fixed hues keyed by utils/tags.js tagColorIndex() — muted background +
+   matching border/text, same shape/scale as .role-chip. Never the azure
+   you-are-here accent or the danger red. Kept local to this file since
+   styles/tokens.css isn't in this work order's file list. */
+:root {
+  --tag-c0-bg: #E3F5F1; --tag-c0-border: #A8DED2; --tag-c0-text: #1B6F5F;
+  --tag-c1-bg: #EAF5E3; --tag-c1-border: #BEDFA6; --tag-c1-text: #3F6B23;
+  --tag-c2-bg: #FBF3D9; --tag-c2-border: #E9D48A; --tag-c2-text: #7A5B00;
+  --tag-c3-bg: #FBE9E1; --tag-c3-border: #EFBFA8; --tag-c3-text: #96431C;
+  --tag-c4-bg: #F3E6F5; --tag-c4-border: #D8AEDF; --tag-c4-text: #7A3182;
+  --tag-c5-bg: #FBE7EF; --tag-c5-border: #EFB6CC; --tag-c5-text: #9C2F58;
+  --tag-c6-bg: #EAE7F8; --tag-c6-border: #C3B8ED; --tag-c6-text: #4B3593;
+  --tag-c7-bg: #E7EEF0; --tag-c7-border: #B9CDD3; --tag-c7-text: #35606B;
+  /* c8-c15 (Phase 43) — palette 8 -> 16, hash % 16. Same soft-bg/mid-border/
+     deep-text recipe as c0-c7 above. */
+  --tag-c8-bg: #E1EDF9; --tag-c8-border: #A9CBEA; --tag-c8-text: #1D5A8F;
+  --tag-c9-bg: #F2E8DF; --tag-c9-border: #D9BFA4; --tag-c9-text: #7A5230;
+  --tag-c10-bg: #EBEBEF; --tag-c10-border: #C2C2CC; --tag-c10-text: #4A4A58;
+  --tag-c11-bg: #F9E4F2; --tag-c11-border: #E8AED7; --tag-c11-text: #8F2B6B;
+  --tag-c12-bg: #F0F5DC; --tag-c12-border: #D2E098; --tag-c12-text: #5A6B1A;
+  --tag-c13-bg: #DFF2F5; --tag-c13-border: #A5D8DF; --tag-c13-text: #1A6B78;
+  --tag-c14-bg: #E6ECF2; --tag-c14-border: #B3C4D4; --tag-c14-text: #3D5A73;
+  --tag-c15-bg: #E9EBFC; --tag-c15-border: #BFC4F2; --tag-c15-text: #464FB5;
+}
+/* Dark hues (Phase 38) are designed for dark, not lightness-inverted from the
+   light set — transcribed from docs/design/mock2-dark.html.
+   .tag-chip-toggle.active uses --tag-cN-text as a FILL with
+   color: var(--surface) — on dark that's bright-fill + near-black text,
+   the intended active treatment; that rule is untouched. */
+:root[data-theme="dark"] {
+  --tag-c0-bg: rgba(45, 212, 191, 0.14);  --tag-c0-border: rgba(45, 212, 191, 0.4);  --tag-c0-text: #5EEAD4;
+  --tag-c1-bg: rgba(140, 210, 90, 0.14);  --tag-c1-border: rgba(140, 210, 90, 0.4);  --tag-c1-text: #A6E08C;
+  --tag-c2-bg: rgba(240, 196, 80, 0.14);  --tag-c2-border: rgba(240, 196, 80, 0.4);  --tag-c2-text: #F5D479;
+  --tag-c3-bg: rgba(255, 138, 101, 0.14); --tag-c3-border: rgba(255, 138, 101, 0.4); --tag-c3-text: #FFA98A;
+  --tag-c4-bg: rgba(240, 120, 180, 0.14); --tag-c4-border: rgba(240, 120, 180, 0.4); --tag-c4-text: #F5A0CB;
+  --tag-c5-bg: rgba(178, 140, 240, 0.14); --tag-c5-border: rgba(178, 140, 240, 0.4); --tag-c5-text: #C6ADF5;
+  --tag-c6-bg: rgba(130, 150, 240, 0.14); --tag-c6-border: rgba(130, 150, 240, 0.4); --tag-c6-text: #A9B8F7;
+  --tag-c7-bg: rgba(110, 190, 205, 0.14); --tag-c7-border: rgba(110, 190, 205, 0.4); --tag-c7-text: #9AD3E3;
+  /* c8-c15 dark (Phase 43) — designed for dark, not lightness-flipped, same
+     recipe as the c0-c7 dark set above. */
+  --tag-c8-bg: rgba(96, 165, 250, 0.14);  --tag-c8-border: rgba(96, 165, 250, 0.4);  --tag-c8-text: #93C5FD;
+  --tag-c9-bg: rgba(217, 178, 130, 0.14); --tag-c9-border: rgba(217, 178, 130, 0.4); --tag-c9-text: #E3C8A0;
+  --tag-c10-bg: rgba(160, 165, 185, 0.14); --tag-c10-border: rgba(160, 165, 185, 0.4); --tag-c10-text: #B8BDD0;
+  --tag-c11-bg: rgba(240, 100, 200, 0.14); --tag-c11-border: rgba(240, 100, 200, 0.4); --tag-c11-text: #F0A0D8;
+  --tag-c12-bg: rgba(190, 220, 90, 0.14);  --tag-c12-border: rgba(190, 220, 90, 0.4);  --tag-c12-text: #CFE08A;
+  --tag-c13-bg: rgba(80, 200, 220, 0.14);  --tag-c13-border: rgba(80, 200, 220, 0.4);  --tag-c13-text: #8ADAE8;
+  --tag-c14-bg: rgba(140, 170, 200, 0.14); --tag-c14-border: rgba(140, 170, 200, 0.4); --tag-c14-text: #A8C4DE;
+  --tag-c15-bg: rgba(170, 185, 255, 0.16); --tag-c15-border: rgba(170, 185, 255, 0.42); --tag-c15-text: #C7D0FF;
+}
+
+/* tag-chip's common recipe now lives in the shared .role-chip, .status-chip,
+   .tag-chip base above; this rule keeps only what tag-chip alone
+   needs — flex layout + gap for its nested .tag-chip-x close button. */
+.tag-chip {
+  display: inline-flex; align-items: center; gap: var(--space-1); white-space: nowrap;
+  /* Phase 43: positioning context for an owner's anchored TagColorPopover
+     (harmless on chips that never host one). */
+  position: relative;
+  /* P47 ruling 5 (P43×P44 regression): max-width/overflow:hidden used to live
+     here, but overflow:hidden on this element also clipped the absolutely-
+     positioned .tag-color-popover child, hiding it entirely. Truncation moved
+     to .tag-chip-label (below) — the popover trigger, not the chip — so the
+     chip itself no longer clips its own children. */
+}
+.tag-chip.c0 { background: var(--tag-c0-bg); border-color: var(--tag-c0-border); color: var(--tag-c0-text); }
+.tag-chip.c1 { background: var(--tag-c1-bg); border-color: var(--tag-c1-border); color: var(--tag-c1-text); }
+.tag-chip.c2 { background: var(--tag-c2-bg); border-color: var(--tag-c2-border); color: var(--tag-c2-text); }
+.tag-chip.c3 { background: var(--tag-c3-bg); border-color: var(--tag-c3-border); color: var(--tag-c3-text); }
+.tag-chip.c4 { background: var(--tag-c4-bg); border-color: var(--tag-c4-border); color: var(--tag-c4-text); }
+.tag-chip.c5 { background: var(--tag-c5-bg); border-color: var(--tag-c5-border); color: var(--tag-c5-text); }
+.tag-chip.c6 { background: var(--tag-c6-bg); border-color: var(--tag-c6-border); color: var(--tag-c6-text); }
+.tag-chip.c7 { background: var(--tag-c7-bg); border-color: var(--tag-c7-border); color: var(--tag-c7-text); }
+.tag-chip.c8 { background: var(--tag-c8-bg); border-color: var(--tag-c8-border); color: var(--tag-c8-text); }
+.tag-chip.c9 { background: var(--tag-c9-bg); border-color: var(--tag-c9-border); color: var(--tag-c9-text); }
+.tag-chip.c10 { background: var(--tag-c10-bg); border-color: var(--tag-c10-border); color: var(--tag-c10-text); }
+.tag-chip.c11 { background: var(--tag-c11-bg); border-color: var(--tag-c11-border); color: var(--tag-c11-text); }
+.tag-chip.c12 { background: var(--tag-c12-bg); border-color: var(--tag-c12-border); color: var(--tag-c12-text); }
+.tag-chip.c13 { background: var(--tag-c13-bg); border-color: var(--tag-c13-border); color: var(--tag-c13-text); }
+.tag-chip.c14 { background: var(--tag-c14-bg); border-color: var(--tag-c14-border); color: var(--tag-c14-text); }
+.tag-chip.c15 { background: var(--tag-c15-bg); border-color: var(--tag-c15-border); color: var(--tag-c15-text); }
+
+/* ProjectCard's read-only tag row, under the description */
+.pcard-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: calc(var(--space-1) * -1) 0 var(--space-3); }
+/* P47: these chips have no .tag-chip-label child (bare text only, no
+   popover trigger here) so they lost truncation when .tag-chip's own
+   overflow/max-width moved to the label. Per the flex-bare-text rule (Phase
+   44 policy block below): a single-child chip with no sibling can go
+   display:block and truncate its own text directly, zero JSX change. */
+.pcard-tags .tag-chip {
+  display: inline-block; max-width: calc(var(--space-8) * 3); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;
+}
+
+/* ProjectForm's chip input: committed chips + trailing text field share one
+   bordered box, replacing the plain input's own border/margin. */
+.tag-input-box {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1);
+  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface);
+  padding: var(--space-1) var(--space-2); margin-bottom: var(--space-2);
+}
+.tag-input-box:focus-within { outline: 2px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+.tag-input-box input {
+  flex: 1; min-width: calc(var(--space-8) * 3); width: auto; border: none; padding: var(--space-1) calc(var(--space-1) * 0.4); margin: 0;
+}
+.tag-input-box input:focus { outline: none; }
+
+.tag-chip-x { background: none; border: none; cursor: pointer; color: inherit; font-size: var(--font-size-sm); line-height: 1; padding: 0; }
+.tag-chip-x:hover { opacity: 0.6; }
+
+/* Owner-only clickable tag text (P43) — opens TagColorPopover; plain text
+   otherwise (see ProjectForm/ProjectPage). Reset to look identical to the
+   surrounding chip text until hovered/focused. */
+.tag-chip-label {
+  background: none; border: none; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer;
+  /* P47 ruling 5: the truncation cap formerly on .tag-chip lives here now —
+     same token-based max-width, but scoped to the label so overflow:hidden
+     no longer clips the sibling .tag-color-popover. */
+  max-width: calc(var(--space-8) * 3); overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; display: inline-block; vertical-align: middle;
+}
+.tag-chip-label:hover, .tag-chip-label:focus-visible { text-decoration: underline; }
+
+/* WorkspacePage: sort select + tag filter chips, between the section label and the grid */
+.projects-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: calc(var(--space-2) * -1) 0 var(--space-4); }
+.projects-controls .dropdown { width: auto; min-width: calc(var(--space-8) * 4); margin-bottom: 0; }
+
+.tag-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+/* P47: same bare-text-only shape as .pcard-tags .tag-chip above — this
+   toggle button IS the chip, with no separate label child, so it needs its
+   own truncation now that .tag-chip lost overflow/max-width. */
+.tag-chip-toggle {
+  cursor: pointer; font: inherit;
+  display: inline-block; max-width: calc(var(--space-8) * 3); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;
+}
+.tag-chip-toggle.active.c0 { background: var(--tag-c0-text); border-color: var(--tag-c0-text); color: var(--surface); }
+.tag-chip-toggle.active.c1 { background: var(--tag-c1-text); border-color: var(--tag-c1-text); color: var(--surface); }
+.tag-chip-toggle.active.c2 { background: var(--tag-c2-text); border-color: var(--tag-c2-text); color: var(--surface); }
+.tag-chip-toggle.active.c3 { background: var(--tag-c3-text); border-color: var(--tag-c3-text); color: var(--surface); }
+.tag-chip-toggle.active.c4 { background: var(--tag-c4-text); border-color: var(--tag-c4-text); color: var(--surface); }
+.tag-chip-toggle.active.c5 { background: var(--tag-c5-text); border-color: var(--tag-c5-text); color: var(--surface); }
+.tag-chip-toggle.active.c6 { background: var(--tag-c6-text); border-color: var(--tag-c6-text); color: var(--surface); }
+.tag-chip-toggle.active.c7 { background: var(--tag-c7-text); border-color: var(--tag-c7-text); color: var(--surface); }
+.tag-chip-toggle.active.c8 { background: var(--tag-c8-text); border-color: var(--tag-c8-text); color: var(--surface); }
+.tag-chip-toggle.active.c9 { background: var(--tag-c9-text); border-color: var(--tag-c9-text); color: var(--surface); }
+.tag-chip-toggle.active.c10 { background: var(--tag-c10-text); border-color: var(--tag-c10-text); color: var(--surface); }
+.tag-chip-toggle.active.c11 { background: var(--tag-c11-text); border-color: var(--tag-c11-text); color: var(--surface); }
+.tag-chip-toggle.active.c12 { background: var(--tag-c12-text); border-color: var(--tag-c12-text); color: var(--surface); }
+.tag-chip-toggle.active.c13 { background: var(--tag-c13-text); border-color: var(--tag-c13-text); color: var(--surface); }
+.tag-chip-toggle.active.c14 { background: var(--tag-c14-text); border-color: var(--tag-c14-text); color: var(--surface); }
+.tag-chip-toggle.active.c15 { background: var(--tag-c15-text); border-color: var(--tag-c15-text); color: var(--surface); }
+
+/* ===================== breadcrumbs (Phase 24) ===================== */
+/* Home / ancestor / ancestor / current — the Home/ancestor Links reuse the
+   existing .crumb idiom as-is; the separator and the plain-text current
+   segment share its type scale/color without being clickable. */
+.breadcrumbs { display: flex; flex-wrap: wrap; align-items: baseline; margin-bottom: var(--space-2); }
+/* Phase 44: the sep+crumb (or sep+current) pairing spans are flex items of
+   .breadcrumbs — min-width:0 lets a pair shrink/wrap instead of holding its
+   full content width; flex-wrap:wrap above means they drop to a new line
+   first, this is the belt-and-suspenders floor. .crumb-current gets no
+   max-width (priority, per-surface decision) but still can't escape past
+   the wrapped row on an unbroken token. */
+.breadcrumbs > span { min-width: 0; }
+.crumb-sep, .crumb-current { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); overflow-wrap: anywhere; }
+
+/* ===================== tree picker / Organize (Phase 25) ===================== */
+/* TreePicker + Organize's read-tree both render one flat .row-list under a
+   .tree-picker container, one <li> per node/root regardless of nesting —
+   depth comes in as an inline --depth custom property and only shifts
+   padding-left; row hover/truncation stay the plain .row-list/.fname rules. */
+.tree-picker li { padding-left: calc(var(--space-2) + var(--depth, 0) * var(--space-5)); display: flex; align-items: center; gap: var(--space-2); flex-wrap: nowrap; }
+.tree-picker li .fname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tree-picker li .here-tag, .tree-picker li .add-inline { flex: none; margin-top: 0; }
+.tree-current { color: var(--muted); cursor: default; }
+.tree-current em { font-style: normal; font-family: var(--font-mono); font-size: var(--font-size-xs); margin-left: var(--space-1); }
+
+/* ===================== kanban board (Phase 26; column scroll + mobile peek: Phase 34) ===================== */
+/* Three fixed columns, side by side; overflow-x scrolls the row instead of
+   squeezing columns unreadably narrow on small screens. Each column is capped
+   at a viewport-derived height (P34: 100vh minus the 56px app-header plus a
+   token-composed allowance for everything else above the board) so a long
+   column scrolls internally instead of growing the page — .board-column
+   becomes a flex column so its head stays put while .board-cards takes the
+   remaining space and scrolls. */
+.board { display: flex; gap: var(--space-4); margin-top: var(--space-6); overflow-x: auto; padding-bottom: var(--space-2); position: relative; }
+.board-column {
+  flex: 1 1 0; min-width: 240px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card);
+  padding: var(--space-4);
+  display: flex; flex-direction: column; max-height: calc(100vh - 56px - var(--space-8) * 6);
+}
+.board-column.drag-over { border-color: var(--navy); background: var(--navy-soft); }
+.board-column-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: var(--space-3); flex: none; }
+.board-column-head h3 { margin: 0; font-size: var(--font-size-sm); }
+
+.board-cards { display: flex; flex-direction: column; gap: var(--space-2); min-height: calc(var(--space-6) * 2); flex: 1; overflow-y: auto; }
+
+.board-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card);
+  padding: var(--space-2) var(--space-3); cursor: grab; touch-action: none;
+}
+.board-card:active { cursor: grabbing; }
+.board-card.static { cursor: default; }
+.board-card.dragging { opacity: 0.6; } /* P45: source no longer transforms (DragOverlay moves instead) — no stacking context to lift, z-index dropped */
+/* Phase 44: 2-line clamp (rule: board cards are taller than a task row) — h4
+   holds ONLY the title (chips are its siblings, not nested inside), so the
+   clamp applies cleanly with no flex/wrapper complication. */
+.board-card h4 { margin: 0; font-size: var(--font-size-sm); font-weight: 600; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.board-card-project { display: block; margin-top: var(--space-1); font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); }
+
+@media (max-width: 800px) {
+  /* Partial next-column peek (~88vw, not the even 3-up split) is the scroll
+     affordance itself — it signals there's another column just off-screen.
+     The right-edge fade on .board (pinned via the position:relative above,
+     so it reads on top of the cards as they scroll underneath it) is a
+     STATIC overlay for v1 — always shown, not hidden once scrolled to the
+     end. Scroll-aware hide-at-end is the spec's flagged nice-to-have; going
+     static keeps this a CSS-only change with no scroll-position JS. */
+  .board::after {
+    content: ""; position: absolute; top: 0; right: 0; bottom: var(--space-2); width: var(--space-8);
+    background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none;
+  }
+  .board-column { flex: 0 0 88vw; min-width: 0; }
+}
+
+/* ===================== what's-new + tour (Phase 28) ===================== */
+/* WhatsNewModal renders inside the existing Modal — just the entry list. */
+.whats-new-entry { margin-bottom: var(--space-4); }
+.whats-new-entry:last-of-type { margin-bottom: 0; }
+.whats-new-entry h4 { margin: 0 0 var(--space-1); }
+.whats-new-entry ul { margin: 0; padding-left: var(--space-5); }
+.whats-new-entry li { font-size: var(--font-size-sm); color: var(--text); margin-bottom: var(--space-1); }
+
+/* Tour: its own dim overlay (mirrors .modal-backdrop) since a card can be
+   pinned near a sidebar element instead of centered, which Modal doesn't support. */
+.tour-overlay {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  background: var(--overlay);
+  display: flex; align-items: center; justify-content: center;
+}
+.tour-highlight {
+  position: fixed; z-index: var(--z-modal);
+  border: 2px solid var(--navy); border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 4px var(--focus-ring-soft);
+  pointer-events: none;
+}
+/* P47: the card is never anchored to a target (a long sidebar could push an
+   anchored card below the viewport with no way out) — it's always a fixed
+   corner card, default bottom-right, steerable per-step via `.tour-card--bl`
+   when a step's target is on the right half of the screen. */
+.tour-card {
+  position: fixed;
+  background: var(--surface-raised); border-radius: var(--radius-card); box-shadow: var(--shadow-modal);
+  padding: var(--space-6); width: 320px; max-width: calc(100vw - var(--space-8));
+}
+.tour-card--br { bottom: var(--space-4); right: var(--space-4); }
+.tour-card--bl { bottom: var(--space-4); left: var(--space-4); }
+.tour-dots { display: flex; gap: var(--space-2); margin-bottom: var(--space-3); }
+.tour-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+.tour-dot.active { background: var(--navy-fill); }
+.tour-card h3 { margin: 0 0 var(--space-2); }
+.tour-card p { color: var(--muted); font-size: var(--font-size-sm); margin: 0 0 var(--space-2); }
+.tour-actions { display: flex; justify-content: space-between; margin-top: var(--space-4); }
+
+/* Below ~800px the corner has no room to spare — span full width at the
+   bottom instead so the card (and its always-reachable buttons) stays fully
+   on-screen down to 320×480. */
+@media (max-width: 800px) {
+  .tour-card--br, .tour-card--bl {
+    left: var(--space-4); right: var(--space-4); bottom: var(--space-4);
+    width: auto; max-width: none;
+  }
+}
+
+/* ===================== page composition + wayfinding (Phase 31) ===================== */
+/* --panel sits between --bg and --surface for the panel-band's quiet tint —
+   tokens.css isn't in this phase's file list, so (same reasoning as the P23
+   tag-hue tokens above) it's defined locally instead. */
+:root {
+  --panel: #EEF2F8;
+}
+:root[data-theme="dark"] {
+  --panel: #101827;
+}
+
+/* Caps prose surfaces (workspace/project descriptions, note view body) at a
+   readable line length instead of stretching edge-to-edge on wide screens. */
+.content-readable { max-width: 62ch; }
+
+/* Compact "Views: Roadmap · Board" strip, replacing the old stacked
+   .route-card pair — one card-like row, each view a glyph-free text link with
+   its own mono mini-label. .mini-route/.mini-label are the existing globals
+   (goal-progress dots elsewhere); reset here since .views-link's own bold
+   weight would otherwise bleed into them. */
+.views-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-card); padding: var(--space-1) var(--space-2);
+  margin-bottom: calc(var(--space-6) + var(--space-1));
+}
+.views-caption {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); padding: 0 var(--space-3);
+}
+.views-link {
+  display: flex; align-items: center; gap: var(--space-2); text-decoration: none; color: var(--text);
+  font-weight: 600; font-size: var(--font-size-sm); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg);
+  white-space: nowrap; /* a link never wraps internally — the ROW wraps whole links instead, keeping hitboxes intact */
+}
+.views-link:hover { background: var(--navy-soft); }
+.views-link .mini-route { margin: 0; }
+.views-link .mini-label { font-weight: 400; }
+.views-sep { width: 1px; align-self: stretch; margin: var(--space-3) 0; background: var(--border); }
+.tab-row {
+  display: flex; gap: var(--space-1); margin-bottom: var(--space-5); border-bottom: 1px solid var(--border);
+}
+.tab-row button {
+  border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted);
+  cursor: pointer; padding: var(--space-3) var(--space-4); font: inherit; font-weight: 600;
+}
+.tab-row button:hover { color: var(--navy); }
+.tab-row button.active { color: var(--navy); border-bottom-color: var(--navy); }
+
+@media (max-width: 800px) {
+  .views-row { flex-wrap: wrap; }
+  .views-sep { display: none; }
+}
+
+/* Quiet secondary zone: Needs-your-review / Links / Files / Notes-preview /
+   Suggestions share this tinted band instead of reading as independent
+   full-weight sections. Sections inside are separated by a divider above
+   their own .section-label; the first one never gets a leading divider. */
+.panel-band { margin-top: var(--space-8); background: var(--panel); border-radius: var(--radius-card); padding: var(--space-2) var(--space-6) var(--space-6); }
+.panel-section { padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.panel-section:first-child { border-top: none; padding-top: var(--space-4); }
+.panel-section .section-label { margin: var(--space-4) 0 var(--space-3); }
+/* A wrapped child that renders null (SuggestionsPanel/LinksSection/FilesSection
+   all do when there's nothing to show and no write/suggest access) would
+   otherwise leave an empty .panel-section still drawing its divider — hide it,
+   and drop the divider that would then float above the next real section. */
+.panel-section:empty { display: none; }
+.panel-section:empty + .panel-section { border-top: none; padding-top: var(--space-4); }
+
+/* Sidebar separation (§B3, W2 consumes) — the pinned default workspace row
+   sits directly under Overview with a subtle tint distinct from a plain
+   .side-row; give it a nested .glyph (existing global) for the "small glyph
+   slot" the spec calls for. Self-sufficient (not just a .side-row modifier)
+   so it still reads correctly whichever way W2 combines the classes. */
+/* Phase 44: this row renders name-only (no .mini/delete-x sibling in the
+   JSX) — display:block instead of flex so single-line ellipsis (rule 2)
+   actually applies (verified: text-overflow has no effect on a flex
+   container's own bare text, only on a plain block/inline-block box). */
+.side-home {
+  display: block; width: 100%;
+  padding: var(--space-2) var(--space-2); border-radius: var(--radius-lg);
+  color: var(--text); text-decoration: none; font-size: var(--font-size-sm); font-weight: 500;
+  background: var(--navy-soft); border: 1px solid var(--border);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.side-home:hover { border-color: var(--navy); }
+.side-home.active { background: var(--navy-fill); color: var(--white); border-color: transparent; }
+.side-home.active .mini { color: var(--active-mini); }
+
+/* Tiny mono group label ("WORKSPACES", "SHARED") — same recipe as the
+   existing .side-label, kept as its own class per the phase contract since
+   the new grouping (Overview/Home pinned above it) doesn't map 1:1 to the
+   old three-group Yours/Shared with you/System list .side-label was for. */
+.side-group-label {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); padding: 0 var(--space-2); margin: var(--space-5) 0 var(--space-1);
+}
+.side-group-label:first-child { margin-top: 0; }
+
+/* The active-workspace trail: a flat list of rows indented by a --depth
+   custom property (TreePicker's idiom, not nested wrapper divs per level) —
+   one indented "you are here" path under its top-level ancestor. */
+.side-trail { margin: var(--space-1) 0 var(--space-1) var(--space-2); padding-left: var(--space-3); border-left: 2px solid var(--border); }
+/* Phase 44: single text content, no sibling — display:block (not flex) so
+   single-line ellipsis (rule 2) actually applies here. */
+.side-trail-row {
+  display: block; width: 100%;
+  padding: var(--space-2) var(--space-2); padding-left: calc(var(--space-2) + var(--depth, 0) * var(--space-4));
+  border-radius: var(--radius-lg); color: var(--text); text-decoration: none; font-size: var(--font-size-sm); font-weight: 500;
+  background: none; border: none; cursor: pointer; text-align: left; font-family: var(--font-body);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.side-trail-row:hover { background: var(--navy-soft); }
+.side-trail-row.active { background: var(--navy-fill); color: var(--white); }
+.side-trail-row.active .mini { color: var(--active-mini); }
+
+/* TreePicker row glyphs (workspace vs project) and the Move modal's live
+   destination preview. */
+.tree-row-icon {
+  color: var(--navy); font-size: var(--font-size-sm); width: var(--space-4); display: inline-block;
+  text-align: center; margin-right: var(--space-1);
+}
+.tree-current .tree-row-icon { color: inherit; }
+
+/* Phase 44: Move-modal path line — rule 3 (wrap + anywhere; per-surface
+   decision overrides the general identity-list mention of "path lines" —
+   paths may go multi-line, that's fine in a modal). */
+.tree-dest-preview {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted);
+  border-top: 1px solid var(--border); padding-top: var(--space-3); margin-top: var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+/* ===================== onboarding: auth blurb + first-visit tips (Phase 32) ===================== */
+/* Login page's product statement + glyph bullets, sitting above .auth — reuses
+   the header's .wordmark/.wp and the global .glyph rather than new tokens. */
+.auth-blurb { max-width: 380px; margin: calc(var(--space-8) * 2) auto 0; text-align: center; }
+.auth-blurb .wordmark { justify-content: center; }
+.auth-statement { color: var(--muted); font-size: var(--font-size-sm); margin: var(--space-3) 0 var(--space-4); }
+.auth-bullets { list-style: none; margin: 0 auto; padding: 0; max-width: 300px; display: flex; flex-direction: column; gap: var(--space-2); text-align: left; }
+.auth-bullets li { display: flex; align-items: center; gap: var(--space-3); font-size: var(--font-size-sm); color: var(--text); }
+/* Only the login page precedes .auth with a blurb — register's .auth keeps its own top margin untouched. */
+.auth-blurb + .auth { margin-top: var(--space-6); }
+
+/* FirstVisitTip: quiet single-line panel + "Got it" (.btn-ghost, global) —
+   same --panel tint as the P31 panel-band, not the .invite-banner's warning
+   yellow (a tip is informational, not something needing attention). */
+.first-tip {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4); margin: 0 0 var(--space-4);
+}
+.first-tip p { margin: 0; font-size: var(--font-size-sm); color: var(--text); }
+.first-tip button { flex: none; }
+
+/* ===================== the review loop (Phase 33) ===================== */
+
+/* A one-line, dismiss-free notice under a container page's head when the
+   viewer is suggesting rather than writing directly (WorkspacePage/ProjectPage).
+   Quiet suggester-accent tint — distinct from .invite-banner's warning yellow,
+   this isn't something needing attention, just ambient context. */
+.propose-banner {
+  background: var(--accent-soft); border: 1px solid var(--sugg-border); border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4); font-size: var(--font-size-sm); color: var(--suggester-text);
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+/* .section-label's count badge (ReviewSummary's "Needs your review · N") —
+   navy pill, same recipe as the role/status/op/tag chip family but inline
+   with the label text rather than trailing a row. */
+.section-label .count-badge {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); background: var(--navy-fill); color: var(--white);
+  border-radius: var(--radius-pill); padding: 0.05rem var(--space-2);
+}
+
+/* ReviewSummary's roll-up panel: same accent-soft/sugg-border surface as
+   .propose-banner, but a multi-row panel with a dashed divider
+   between rows (mirrors mock2-home.html's rollup). */
+.rollup { background: var(--accent-soft); border: 1px solid var(--sugg-border); border-radius: var(--radius-card); padding: var(--space-1) var(--space-2); }
+.rollup-row { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-3); border-radius: var(--radius-lg); flex-wrap: wrap; }
+.rollup-row + .rollup-row { border-top: 1px dashed var(--sugg-border); }
+.rollup-row .rr-what { flex: 1; min-width: calc(var(--space-8) * 5); }
+/* Phase 44: rr-path names a project/workspace inline — content-adjacent, not
+   a card identity line, and .rr-what already wraps the row (rule 3 style). */
+.rollup-row .rr-path { font-weight: 600; color: var(--text); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+.rollup-row .rr-context { font-size: var(--font-size-xs); color: var(--muted); margin-left: var(--space-2); }
+.rollup-row .rr-count { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--suggester-text); white-space: nowrap; }
+
+/* MySuggestions' status chip: pending reuses the existing dashed/invite look;
+   approved/rejected are new variants (P30's chip system covered role/op/tag/
+   pending/expired, not a resolved suggestion's outcome). Approved borrows the
+   "done" navy tint used elsewhere (.mini-route i.done, .gcard.done); rejected
+   stays neutral like .status-chip.expired — red stays reserved for destructive
+   actions, not a resolved-negative status. */
+.status-chip.approved { border-color: var(--navy); color: var(--navy); background: var(--navy-soft); }
+.status-chip.rejected { background: var(--surface); color: var(--muted); }
+
+/* ===================== Cmd-K quick-switcher (Phase 36) ===================== */
+
+/* Header's discoverability button — same icon-button recipe as .menu-btn but
+   always visible (not mobile-only: it's the only entry point where a
+   physical Cmd/Ctrl key isn't reliably available). */
+.qs-trigger {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; background: none; border: none; cursor: pointer;
+  color: var(--navy); font-size: var(--font-size-md); border-radius: var(--radius-sm); flex: none;
+}
+.qs-trigger:hover { background: var(--navy-soft); }
+
+/* Backdrop drops the panel from near the top (command-palette convention),
+   not centered like .modal-backdrop — mirrors its overlay/z-index idiom
+   otherwise since it's the same "one thing at a time" overlay class. */
+.qs-backdrop {
+  position: fixed; inset: 0; z-index: var(--z-modal); background: var(--overlay);
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh;
+}
+.qs-panel {
+  background: var(--surface-raised); border-radius: var(--radius-card); box-shadow: var(--shadow-modal);
+  width: min(560px, calc(100vw - var(--space-8))); max-height: 70vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.qs-input {
+  width: 100%; margin: 0; border: none; border-bottom: 1px solid var(--border);
+  border-radius: 0; padding: var(--space-4) var(--space-5); font-size: var(--font-size-md);
+  background: transparent;
+}
+.qs-input:focus { outline: none; border-color: var(--border); }
+
+.qs-results { overflow-y: auto; padding: var(--space-2); }
+.qs-empty { padding: var(--space-4) var(--space-3); font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); }
+
+.qs-group-label {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); padding: var(--space-2) var(--space-3) var(--space-1);
+}
+.qs-row-list { list-style: none; margin: 0 0 var(--space-2); padding: 0; }
+.qs-row {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); cursor: pointer;
+}
+.qs-row:hover, .qs-row.qs-row-active { background: var(--navy-soft); }
+/* Phase 44: explicit min-width:0/flex — this element already has overflow:hidden
+   set on itself (not just an ancestor), so it already shrinks correctly as a
+   flex item, but making the flex sizing explicit matches the audited policy. */
+.qs-row-title { color: var(--text); font-weight: 500; font-size: var(--font-size-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 auto; }
+.qs-row-context { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); flex: none; margin-left: auto; }
+
+@media (max-width: 800px) {
+  /* Full-width sheet under the header rather than a floating centered panel. */
+  .qs-backdrop { padding-top: 0; }
+  .qs-panel { width: 100%; max-width: 100%; height: calc(100vh - 56px); max-height: none; margin-top: 56px; border-radius: 0; }
+}
+
+/* Phase 39 */
+/* Priority is WEIGHT not hue (identity rules keep red/azure reserved) —
+   high fills navy, medium/low are outline-only, quieter by rank. Base
+   recipe (mono/pill/border) comes from the shared chip rule above. */
+.prio-chip.high { background: var(--navy-fill); border-color: var(--navy-fill); color: var(--white); }
+.prio-chip.medium { border-color: var(--navy); color: var(--navy); }
+.prio-chip.low { border-color: var(--border); color: var(--muted); }
+
+/* Overdue is the one place a due chip borrows the danger voice; today just
+   gets navy weight — same restraint as the priority chips above. */
+.due-chip.overdue { color: var(--danger-text); }
+.due-chip.today { color: var(--navy); font-weight: 600; }
+
+/* Phase 40 */
+/* Organize's full-tree rows: press-and-hold drag (dnd-kit PointerSensor).
+   Weight, not hue, marks a valid drop target — no azure outside .here-tag. */
+.organize-drop { background: var(--hover-tint); box-shadow: inset 0 0 0 1px var(--navy); }
+.tree-picker .organize-draggable { cursor: grab; touch-action: none; }
+.tree-picker .organize-draggable:active { cursor: grabbing; }
+
+/* Phase 41 */
+/* Positional board drop: hovering a card in positional mode shows an
+   insertion cue (navy weight, no azure). .board-card carries no box-shadow
+   of its own, so no stacking is needed here. */
+.board-card-insert { box-shadow: inset 0 2px 0 var(--navy); }
+
+/* Phase 42 */
+/* Needs-attention dashboard rows: title link + due/priority chips on one
+   line, truncating rather than wrapping like .row-list's rows do elsewhere. */
+.attention-row { display: flex; align-items: center; gap: var(--space-3); font-size: var(--font-size-sm); padding: var(--space-1) 0; }
+.attention-row a { color: var(--text); font-weight: 500; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attention-row a:hover { text-decoration-color: var(--navy); }
+
+/* Phase 43 */
+/* TagColorPopover: anchored to its parent .tag-chip (position:relative,
+   above). Chrome reuses existing surface-raised/border/shadow-card tokens —
+   no new tokens introduced, just the 16 hue swatches keyed to the same
+   --tag-cN-text vars .tag-chip-toggle.active already fills with. */
+.tag-color-popover {
+  position: absolute; top: calc(100% + var(--space-1)); left: 0; z-index: var(--z-modal);
+  background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card); padding: var(--space-2); width: 176px;
+}
+.tag-color-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-1); margin-bottom: var(--space-2); }
+.tag-color-swatch { width: 24px; height: 24px; border-radius: var(--radius-sm); border: 2px solid transparent; cursor: pointer; padding: 0; }
+.tag-color-swatch.selected { border-color: var(--text); }
+.tag-color-swatch.c0 { background: var(--tag-c0-text); }
+.tag-color-swatch.c1 { background: var(--tag-c1-text); }
+.tag-color-swatch.c2 { background: var(--tag-c2-text); }
+.tag-color-swatch.c3 { background: var(--tag-c3-text); }
+.tag-color-swatch.c4 { background: var(--tag-c4-text); }
+.tag-color-swatch.c5 { background: var(--tag-c5-text); }
+.tag-color-swatch.c6 { background: var(--tag-c6-text); }
+.tag-color-swatch.c7 { background: var(--tag-c7-text); }
+.tag-color-swatch.c8 { background: var(--tag-c8-text); }
+.tag-color-swatch.c9 { background: var(--tag-c9-text); }
+.tag-color-swatch.c10 { background: var(--tag-c10-text); }
+.tag-color-swatch.c11 { background: var(--tag-c11-text); }
+.tag-color-swatch.c12 { background: var(--tag-c12-text); }
+.tag-color-swatch.c13 { background: var(--tag-c13-text); }
+.tag-color-swatch.c14 { background: var(--tag-c14-text); }
+.tag-color-swatch.c15 { background: var(--tag-c15-text); }
+.tag-color-auto {
+  width: 100%; background: none; border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2); cursor: pointer; font-family: var(--font-mono);
+  font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+}
+.tag-color-auto:hover { background: var(--navy-soft); }
+
+/* Phase 44 A1 (popover viewport clamp): at mobile widths the chip-anchored
+   popover clips the right viewport edge (~74px, Auto button hidden). Detach it
+   into a centered sheet. NB the base rule's top:calc(100% + …) resolves against
+   the VIEWPORT once position becomes fixed (it would land off the bottom edge),
+   so top must be re-anchored here — the spec's A1 gave left/transform/max-width
+   only; top:50% + a full translate(-50%,-50%) is the minimal completion that
+   makes the "centered sheet" land in-viewport. Desktop (absolute) unchanged. */
+@media (max-width: 800px) {
+  .tag-color-popover {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    max-width: calc(100vw - 2 * var(--space-4));
+  }
+}
+
+/* ===================== Phase 44: app-wide overflow policy ===================== */
+/* THE LAW — every future CSS addition follows this. The individual fixes for
+   Phase 44 itself are applied INLINE at each rule they touch (search
+   "Phase 44" throughout this file, top to bottom) rather than only here, so
+   each fix sits next to the rule it corrects; this block is the reference
+   the inline comments point back to.
+   1. min-width:0 on every flex/grid CHILD that contains text, so it can
+      shrink below its content size — the root cause of most escapes.
+   2. Single-line identity text (row/card names, titles): overflow:hidden;
+      text-overflow:ellipsis; white-space:nowrap — but ONLY works applied to
+      an element that (a) is not itself display:flex/grid, and (b) owns its
+      text directly (no sibling competing for the same box). A flex/grid
+      CONTAINER's own bare text content cannot be ellipsized this way — verified
+      empirically: text-overflow has no effect on a flex container holding a
+      raw text node plus a sibling element (no anonymous flex-item selector
+      exists to hang min-width/overflow on). Where that shape occurs and no
+      JSX wrapper is sanctioned, the fallback is overflow-wrap:anywhere
+      (rule 3) — full containment, no escape, just wrapped instead of
+      truncated. Where it's a single child with no sibling, switching the
+      element off flex (display:block) restores true single-line ellipsis
+      with zero JSX change.
+   3. Multi-line content text (descriptions, note/task bodies, modal copy):
+      normal wrapping + overflow-wrap:anywhere. NEVER white-space:nowrap.
+   4. Headings (h1/h2/h3 page + section titles): wrap allowed +
+      overflow-wrap:anywhere — never truncated, unlike row/card identity text.
+   5. Chips never wrap internally: white-space:nowrap on the shared chip base;
+      .tag-chip additionally gets one token-based max-width so a pathological
+      tag name stays bounded without ordinary tags ever truncating.
+   6. Where truncation is newly applied to a name, the element carries the
+      full text as `title` (added in JSX alongside the CSS fix).
+   7. The body never h-scrolls — wide content scrolls inside its own
+      container. Every fix above was chosen to hold this line, not just the
+      common case. */
+
+/* P45-W1 */
+/* Board interactive cards: DragOverlay's presentation-only copy (the card
+   that actually follows the pointer now — see BoardPage.jsx) gets a raised
+   shadow so it visibly lifts off the board while it travels; grabbing cursor
+   matches the live drag affordance. Quick-add's "+ Add" row reuses .add-inline
+   as-is (no override needed) and its input falls back to the base input rule. */
+.board-card-overlay { box-shadow: var(--shadow-modal); cursor: grabbing; }
+
+/* ===================== P45-W2 ===================== */
+
+/* P54: the note-list-item.selected rule that lived here (note click feedback
+   for the old in-page expand pane) is retired — notes have their own route
+   now, so there's no "selected" list row to highlight; the bare .selected
+   class stays (TagColorPopover's swatch still uses it). */
+
+/* gcard HIGH badge stretch fix (audit residual): h3's flex row had no
+   align-items, so the default `stretch` pulled .prio-chip/.tools to the
+   row's full height whenever a long title wraps to 2 lines. */
+.gcard h3 { align-items: center; }
+/* P45-W3 */
+/* Workspace "Due & upcoming" panel: non-link row title (a workspace-level
+   direct workspace task is already on this page — no href) matches .attention-row a's
+   layout minus the link affordance, so the row's due/prio chips still align. */
+.attention-row-plain { color: var(--text); font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Tag filter's inline "Filter by tag" label — same mono/uppercase/tracked
+   voice as .section-label, without its full-width flex+divider layout (this
+   sits inline among the pills, not as its own section header). */
+.tag-filter-label { font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+/* P45-W4 */
+/* Avatar becomes a Settings link (audit #2); the generic `.header-auth a`
+   rule outranks bare `.avatar` (extra type selector), so pin the properties
+   it would otherwise clobber (white initials on the navy fill, mono/xs) back
+   with a compound selector instead of touching the original declarations. */
+.header-auth a.avatar { color: var(--white); font-size: var(--font-size-xs); font-weight: 400; }
+
+/* QuickSwitcher result subtitle: same ellipsis treatment as .qs-row-title
+   (audit residual) — added properties only, .qs-row-context's own rule is
+   untouched. A max-width cap is needed alongside them since the element is
+   flex:none (sized to content, never squeezed by its sibling) — without a
+   cap the overflow rules would never actually trigger. */
+.qs-row-context { min-width: 0; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* HomePage's empty-attention line: status-line/map-legend voice instead of a
+   tagline, so it reads as a status readout rather than copy. */
+.attention-status { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); letter-spacing: 0.04em; }
+
+/* P46 */
+
+/* Cmd-K arrival focus (task-item / gcard): a one-shot background pulse. The
+   class is added then removed by JS after the duration below (ProjectPage.jsx
+   / RoadmapPage.jsx) — same reduced-motion idiom as .goal-marker.current +
+   goal-pulse: this bare rule is the static look, the animation layers on top
+   only when motion is allowed. */
+.focus-flash { background: var(--navy-soft); }
+
+/* ===================== Phase 48: project-page recomposition ===================== */
+
+/* Notes/Links/Files inside the panel band (mock3) — same recipe as .twocol
+   (min-width:0 law, P44) with a third track. */
+.threecol { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6) var(--space-8); align-items: start; }
+.threecol > * { min-width: 0; }
+/* P54: the .threecol > .panel-section rule that lived here (the old
+   expand-in-place note pane spanning every column) is retired — notes have
+   their own route now, so this grid's three columns (Notes-links / Links /
+   Files) are always plain siblings, never a full-width pane. */
+
+@media (max-width: 1080px) {
+  .threecol { grid-template-columns: 1fr; }
+}
+
+@keyframes focus-flash-pulse {
+  from { background: var(--navy-soft); }
+  to { background: transparent; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .focus-flash { animation: focus-flash-pulse 1.6s ease-out 1; }
+}
+
+/* P47 */
+
+/* Catch-all not-found route: small centered block (not the wide page-head
+   layout other pages use) since there's no real content to anchor to. */
+.not-found { text-align: center; max-width: 420px; margin: calc(var(--space-8) * 2) auto 0; }
+.not-found p { color: var(--muted); margin: var(--space-2) 0 var(--space-4); }
+
+/* P48-W2 */
+
+/* Task title as a button (writers/suggesters): strip button chrome so it
+   reads exactly like the plain-span title it replaces — truncation/ellipsis
+   keeps coming from .task-item h4 .task-title (class selector, applies to
+   either tag) so no rule duplication is needed here. */
+.task-title-btn { background: none; border: none; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.task-title-btn:hover { color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ===================== Phase 50: board order ===================== */
+
+/* The bare .focus-flash rule (:1380) loses to .board-card's own background
+   (:877) on specificity alone — pin it here so a Cmd-K board arrival actually
+   pulses. Reuses .focus-flash's existing keyframes/reduced-motion block. */
+.board-card.focus-flash { background: var(--navy-soft); }
+
+/* ===================== Phase 52 (Writer F1): person-first suggestion cards ===================== */
+/* mock5 `.sugg2` — replaced the old flat `.sugg` row in SuggestionsPanel's
+   approver queue (that era's rules were finally deleted in P68).
+   The approve-error line reuses the app's global [role="alert"] box (:349)
+   instead of a bespoke class — same visual, one less rule, and a real live
+   region for the error it announces. */
+.sugg2 { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--navy); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4); }
+.sugg2-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+.sugg2-head .avatar { width: 26px; height: 26px; font-size: var(--font-size-xs); }
+.sugg2-head .who-name { font-weight: 600; font-size: var(--font-size-sm); }
+.sugg2-head .who-time { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); }
+.chip-op {
+  font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--navy);
+  color: var(--navy); background: var(--navy-soft); margin-left: auto; white-space: nowrap;
+}
+.sugg2-target { font-size: var(--font-size-sm); margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.sugg2-target b { font-weight: 600; }
+.sugg2-target .rtype { color: var(--muted); }
+.sugg2 .delta { margin: 0 0 var(--space-3); padding: var(--space-2) var(--space-3); background: var(--panel); border-radius: var(--radius-md); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+.sugg2 .delta .dk { color: var(--muted); }
+.sugg2 .delta .sep { color: var(--border); margin: 0 var(--space-2); }
+.sugg2-actions { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.sugg2-hint { font-size: var(--font-size-xs); color: var(--muted); }
+.summary-chip { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); background: var(--panel); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3); display: inline-block; }
+
+/* Inline mini-diff (single-hunk card) — before/old/new/after lines from the
+   shared contentHunk contract, ctx/del/add per line. */
+.diff { margin: 0 0 var(--space-3); background: var(--panel); border-radius: var(--radius-md); font-size: var(--font-size-sm); overflow: hidden; }
+.diff-line { padding: var(--space-1) var(--space-3); white-space: pre-wrap; overflow-wrap: anywhere; }
+.diff-line.ctx { color: var(--muted); }
+.diff-line.del { background: var(--danger-bg); color: var(--danger-text); text-decoration: line-through; text-decoration-thickness: 1px; }
+.diff-line.add { background: var(--navy-soft); color: var(--navy); }
+.diff-line.add::before { content: "+ "; font-family: var(--font-mono); font-size: 0.85em; }
+.diff-line.del::before { content: "− "; font-family: var(--font-mono); font-size: 0.85em; }
+/* ===================== Phase 52 (Writer F2): the note margin ===================== */
+/* mock5 .review-layout — the page surface (P63, file end) keeps a fixed
+   reading measure; the margin is a fixed-width column of per-edit cards
+   beside it. Stacks below the text at the existing .threecol breakpoint — a
+   margin column changes the pane's height, same as the threecol collapse
+   already accounts for (see ProjectPage's 500ms scroll re-anchor comment). */
+.review-layout { display: flex; gap: var(--space-6); align-items: flex-start; }
+.review-text { flex: 1; min-width: 0; }
+.review-margin { flex: none; width: 270px; display: flex; flex-direction: column; gap: var(--space-3); }
+@media (max-width: 1080px) {
+  .review-layout { flex-direction: column; }
+  /* Stacked, the cross axis is width, and align-items: flex-start shrink-wraps
+     it — a short note would collapse the whole surface to its longest line
+     (P60: this layout now carries ordinary note viewing, not just review).
+     P63: .note-page-surface replaces .review-text as the direct flex child
+     that needs this (the editor now nests one level deeper, inside it). */
+  .note-page-surface, .review-margin { width: 100%; }
+}
+
+.review-bar {
+  display: flex; align-items: center; gap: var(--space-3); background: var(--navy-soft);
+  border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm); margin: var(--space-2) 0 var(--space-4);
+}
+.review-bar b { color: var(--navy); }
+.review-bar .btn { padding: var(--space-1) var(--space-3); font-size: var(--font-size-xs); }
+
+.mcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-3); box-shadow: var(--shadow-card); font-size: var(--font-size-sm); cursor: pointer; }
+.mcard.active { border-color: var(--navy); }
+.mcard-head { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
+.mcard-head .avatar { width: 22px; height: 22px; font-size: var(--font-size-xs); }
+.mcard-kind { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.06em; margin-left: auto; color: var(--muted); }
+/* Samuel ruling 3 (P60): the diff text wraps as typed (long suggestions were
+   running together on one line) and the del/add pair needs a visible gap
+   when nothing separates them (same landmine the old review-view .hunk .del
+   + .add rule fixed, ported to the margin card since the review view is
+   gone). Targets the diff/body container specifically — NoteMargin.jsx isn't
+   a W-D file, so no new class; `:not()` excludes the head/actions rows,
+   which are the only other bare div children under `.mcard`. */
+.mcard > div:not(.mcard-head):not(.mcard-actions) { white-space: pre-wrap; }
+/* P60.1 §1.5 de-pilling: per-span background/border-radius/padding made
+   adjacent del/add word runs read as a strip of pills instead of continuous
+   text (worst on a wholesale-rewrite card, now one del run + one add run —
+   PHASE_SPEC.md §1.4 — where a box around every run drew a hard line right
+   through what should read as one struck sentence next to one added one).
+   Color alone (kept exactly — dark-mode contrast pass is P61) carries the
+   del/add distinction now; no wrapping-container background needed, the
+   text reads fine on the card's own surface. The `.old + .new` gap rule
+   stays: it's not a pill-styling artifact, it's what keeps a struck run and
+   an unstruck run from visually running together at their shared boundary
+   now that neither has a box of its own. */
+.mcard .old { color: var(--danger); text-decoration: line-through; text-decoration-thickness: 1px; }
+.mcard .new { color: var(--sugg-new-text); } /* P61 §4.2: named so dark can diverge from light's navy-deep — see tokens.css */
+.mcard .old + .new { margin-left: .3em; }
+.mcard-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.mcard-actions .btn { padding: var(--space-1) var(--space-3); font-size: var(--font-size-xs); }
+
+/* P60: the writer's title is an INPUT where the reader still gets an <h2>.
+   Without this it inherits the global `input { width: 100% }` and blows the
+   .note-view-head flex row apart — the actions span wraps and History lands
+   on top of the editor. It has to behave like the h2 it replaced (flexible
+   but shrinkable, per the .page-head/.note-view-head rule up top) AND read
+   like mock7's `.note-head h2`: display font, page-title size, no form-field
+   box — the one-surface model has no visible form chrome. */
+.note-title-input {
+  /* min-width is a WRAP FLOOR, not a shrink guard: with .note-view-head's
+     flex-wrap, a narrow screen drops the actions onto their own row instead
+     of squeezing the title down to a few clipped characters. */
+  flex: 1; min-width: 14rem; margin-bottom: 0;
+  font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 700;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent; background: transparent;
+}
+.note-title-input:hover { border-color: var(--border); }
+.note-title-input::placeholder { color: var(--muted); font-weight: 400; }
+/* The actions span keeps its content width so the buttons never wrap. */
+.note-view-head > span { flex: none; display: flex; gap: var(--space-2); align-items: center; }
+
+/* Proposer identity line, shared by SuggestionsPanel's person-first cards
+   (F1) and these margin cards — same recipe, kept as one shared pair of
+   classes rather than each writer redeclaring it. */
+.who-name { font-weight: 600; font-size: var(--font-size-sm); }
+.who-time { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); }
+
+.approve-error {
+  display: flex; gap: var(--space-2); align-items: baseline; background: var(--danger-bg);
+  border: 1px solid var(--danger-border); color: var(--danger-text); border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm); margin: 0 0 var(--space-2);
+}
+/* ===================== Phase 52 (F3): editing/suggesting toggle ===================== */
+
+/* mock5 .mode-strip — writer-only, placed above the panel-band/board/trail
+   on each container page. A quiet card, not a warning banner (unlike
+   .invite-banner) — flipping modes is a deliberate, reversible choice, not
+   something needing attention. */
+.mode-strip {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4); margin: var(--space-2) 0 var(--space-4); font-size: var(--font-size-sm);
+}
+.mode-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-pill); overflow: hidden; font-family: var(--font-mono); font-size: var(--font-size-xs); flex: none; }
+.mode-toggle button { appearance: none; background: none; border: none; font: inherit; padding: var(--space-1) var(--space-3); cursor: pointer; color: var(--muted); }
+.mode-toggle button.on { background: var(--navy-fill); color: var(--white); }
+.mode-note { color: var(--muted); }
+
+/* ===================== Phase 52.1 hotfix: word-level diff refinement ===================== */
+
+/* SuggestionsPanel's HunkDiff flowed-block variant (a changed line, both old
+   and new present) — same del/add word-mark language as .mcard's own
+   old/new (:1478 above), just scoped under .diff-line.chg instead of
+   .diff-line .del/.add's full-line background so a mid-line edit reads as
+   marked words in one paragraph, not a struck line stacked on an added line. */
+.diff-line.chg .del { background: var(--danger-bg); color: var(--danger); text-decoration: line-through; text-decoration-thickness: 1px; }
+.diff-line.chg .add { background: var(--navy-soft); color: var(--navy-deep); font-weight: 500; }
+
+/* ===================== Phase 53: Dropdown (kills every native select) ===================== */
+
+/* Closed trigger — same box language as the shared input rule (border/
+   radius/background/padding/font, incl. the softened 1px focus-visible ring
+   that used to live on the native select's :focus-visible), plus flex
+   layout for the label + chevron. Block/width:100% by default so it drops
+   into a form the same way a bare select element used to;
+   .member-actions/.projects-controls below re-narrow it to an inline
+   toolbar control. */
+.dropdown { position: relative; display: block; width: 100%; margin-bottom: var(--space-2); }
+.dropdown-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  font-family: var(--font-body); font-size: var(--font-size-sm); padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text);
+  cursor: pointer; text-align: left;
+}
+.dropdown-btn:hover:not(:disabled) { border-color: var(--navy); }
+.dropdown-btn:focus-visible { outline: 1px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+.dropdown-btn:disabled { opacity: 0.5; cursor: default; }
+.dropdown-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dropdown-btn .chevron { color: var(--muted); font-size: var(--font-size-xs); flex: none; }
+
+/* Panel: position:fixed (set inline per-instance from the trigger's
+   getBoundingClientRect — see Dropdown.jsx), intrinsically sized to its
+   longest option (no width here — min-width only, applied inline), capped
+   for long dynamic lists (assign-task, workspace/project targets) with
+   internal scroll. list-style reset since it's a <ul>. */
+.dropdown-menu {
+  list-style: none; margin: 0; padding: var(--space-1);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal); z-index: var(--z-popover);
+  max-height: 40vh; overflow-y: auto;
+  /* The labelledBy sites nest the whole control inside a <label>, whose
+     uppercase mono rule (:321) would otherwise be inherited by the panel —
+     the trigger escapes it only because form controls don't inherit it. */
+  font-family: var(--font-body); text-transform: none; letter-spacing: normal; color: var(--text);
+}
+.dropdown-opt {
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--font-size-sm);
+  cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+}
+.dropdown-opt-label { overflow-wrap: anywhere; min-width: 0; }
+.dropdown-check { flex: none; font-weight: 700; }
+.dropdown-opt.active { background: var(--navy-soft); }
+.dropdown-opt.selected { background: var(--navy-fill); color: var(--white); }
+.dropdown-opt.disabled { color: var(--muted); opacity: 0.5; cursor: default; }
+
+/* Second half of the roadmap-canvas trap: position:fixed frees the panel from
+   the canvas's overflow:hidden, but .gcard is itself a positioned z-index:2
+   stacking context, so --z-popover only ranks the panel INSIDE its own card —
+   a later sibling card still painted over it (visible on the phone's vertical
+   trail, where cards stack). Lift the whole card while its menu is open. */
+.gcard:has(.dropdown-menu) { z-index: var(--z-popover); }
+
+/* ===================== Phase 54: the note page (mock6) ===================== */
+/* Notes get their own route (NotePage.jsx) instead of the project panel-band's
+   expand-in-place pane (P48, retired above) — a sidebar switcher beside a
+   full-width reading column, mirroring mock6's .note-layout onto the token
+   system. NoteView's own .note-view-head/.note-view/.review-* rules (P48/P52)
+   are unchanged and nest inside .note-main exactly as before. */
+.note-layout { display: flex; align-items: stretch; min-height: 560px; }
+.note-switcher { width: 210px; flex: none; border-right: 1px solid var(--border); padding: var(--space-4) var(--space-2); background: var(--surface); }
+.sw-label { display: block; font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 var(--space-2); margin-bottom: var(--space-2); }
+.sw-row { display: block; padding: var(--space-2); border-radius: var(--radius-md); font-size: var(--font-size-sm); text-decoration: none; color: var(--text); overflow-wrap: anywhere; }
+.sw-row:hover { background: var(--navy-soft); }
+.sw-row.active { background: var(--navy-fill); color: var(--white); }
+.sw-row .m { display: block; font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); }
+.sw-row.active .m { color: var(--active-mini); }
+.sw-add { display: block; padding: var(--space-2); border-radius: var(--radius-md); color: var(--navy); font-weight: 600; font-size: var(--font-size-sm); text-decoration: none; }
+.sw-add:hover { background: var(--navy-soft); }
+
+.note-main { flex: 1; min-width: 0; padding-left: var(--space-6); }
+.note-meta { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--muted); margin: 0 0 var(--space-4); overflow-wrap: anywhere; }
+.note-page-actions { margin: 0 0 var(--space-4); }
+
+/* Writer's judgment call (P54): a fixed sidebar has no room on a phone, and a
+   Dropdown (P53) doesn't fit this list's "jump to a different note" semantics
+   (it's navigation, not a value picker) — the switcher instead collapses to a
+   horizontal scroll row above the note, same idea as the review margin's own
+   stack-below-text collapse (:1080px, above) applied at the app's 800px
+   chrome breakpoint. */
+@media (max-width: 800px) {
+  .note-layout { flex-direction: column; min-height: 0; }
+  .note-switcher {
+    width: 100%; flex: none; border-right: none; border-bottom: 1px solid var(--border);
+    display: flex; align-items: stretch; gap: var(--space-1); overflow-x: auto; padding: var(--space-2);
+  }
+  .sw-label { flex: none; align-self: center; margin-bottom: 0; }
+  .sw-row, .sw-add { flex: none; white-space: nowrap; }
+  /* P68 (ui review F2): an uncapped nowrap row let a long title grow to 793px
+     in a 352px rail — the auto-center effect (NotePage.jsx) then landed the
+     reader on a mid-title fragment clipped at BOTH edges. Capping the row
+     below the 390px-viewport rail box makes it truncate at ONE edge with an
+     ellipsis, and a centered row is now always fully in view. .sw-row .m
+     needs its own rule only because text-overflow doesn't inherit. */
+  .sw-row { max-width: calc(var(--space-8) * 8); overflow: hidden; text-overflow: ellipsis; }
+  .sw-row .m { overflow: hidden; text-overflow: ellipsis; }
+  .note-main { padding-left: 0; padding-top: var(--space-4); }
+}
+
+/* ===================== Phase 55 (Writer F3): comments — gold highlight,
+   thread, composer tint, mobile sheet ===================== */
+/* mock6's gold anchor language (:67 `.hl-comment`), now on --comment-bg/
+   --comment-border (tokens.css) instead of literal hex so dark mode picks up
+   its own derived pair. Same inline-highlight micro-padding recipe
+   (radius-sm + the space-1*0.4 padding) as the CM6 suggestion decorations
+   below — both are tappable spans inside note text. */
+.hl-comment {
+  background: var(--comment-bg);
+  border-bottom: 2px dotted var(--comment-border);
+  border-radius: var(--radius-sm);
+  padding: 0 calc(var(--space-1) * 0.4);
+  cursor: pointer;
+}
+/* Darker fill + solid underline on the anchor whose card/sheet is focused —
+   mixed from the two existing tokens rather than adding a third. */
+.hl-comment.active {
+  background: color-mix(in srgb, var(--comment-border) 35%, var(--comment-bg));
+  border-bottom-style: solid;
+}
+
+/* CommentCard's reply list (mock6 :80) — left rail + indent, same shape for
+   both the margin card and the mobile sheet's copy of it. */
+.thread { border-left: 2px solid var(--border); margin: var(--space-2) 0 0 var(--space-2); padding-left: var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Reply box (mock6 :81) — smaller/quieter than the global input,textarea
+   rule (:323) since it's a secondary action nested inside a margin card;
+   placeholder keeps the muted tone, typed text stays full-contrast. */
+.reply-input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-1) var(--space-2); font-size: var(--font-size-xs); font-family: var(--font-body); color: var(--text); background: var(--panel); margin-top: var(--space-2); }
+.reply-input::placeholder { color: var(--muted); }
+
+/* Resolve / self-delete (mock6 :82) — bare text-button, reused wherever a
+   comment card needs a quiet inline action instead of a full .btn. */
+.linklike { border: none; background: none; color: var(--muted); font-size: var(--font-size-xs); cursor: pointer; padding: 0; }
+.linklike:hover { color: var(--navy); }
+
+/* Composer card — the same .mcard shell (:1482), gold-tinted like
+   .invite-banner tints its own callout, so "you're creating a comment"
+   reads distinctly from the neutral thread cards around it. */
+.mcard.comment-composer { background: var(--comment-bg); border-color: var(--comment-border); }
+/* P62 item 5: measured — dark theme's --border (#29344A) reads at only
+   1.14:1 against the composer's dark-gold tint, so the ghost Cancel
+   button's outline is effectively invisible there (light's pale cream tint
+   has no such problem, left untouched). Reuse the card's own border color
+   instead of inventing a new token — 9.87:1 against the tint. */
+:root[data-theme="dark"] .comment-composer .btn-ghost { border-color: var(--comment-border); }
+
+/* Mobile comment sheet (P55 ruling: tap a gold highlight -> bottom sheet).
+   Backdrop+panel flex pair mirrors .modal-backdrop/.modal, flipped to
+   align-items:flex-end for a bottom-anchored sheet instead of a centered
+   dialog; --z-drawer per tokens.css rather than --z-modal since this isn't
+   modal-stacked above toasts. */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: var(--z-drawer); background: var(--overlay);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.comment-sheet {
+  width: 100%; max-height: 70vh; overflow-y: auto;
+  background: var(--surface-raised); border-radius: var(--radius-card) var(--radius-card) 0 0;
+  box-shadow: var(--shadow-modal); padding: var(--space-4) var(--space-5);
+}
+.sheet-head { display: flex; justify-content: flex-end; margin-bottom: var(--space-2); }
+.sheet-close { background: none; border: none; font-size: var(--font-size-lg); cursor: pointer; color: var(--muted); padding: 0; }
+.sheet-close:hover { color: var(--navy); }
+
+/* Slide up on open, gated the same way as .goal-marker.current/.focus-flash
+   above — no entrance motion at all under reduce, rather than a reduced
+   variant of it. */
+@media (prefers-reduced-motion: no-preference) {
+  .comment-sheet { animation: sheet-slide-up 0.22s ease-out; }
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ===================== Phase 56 (Writer W-A): CodeMirror 6 note editor
+   ===================== */
+/* Phase 61 §4.1 unbox (Samuel: the border+focus ring on the note body is
+   "pretty distracting and makes it difficult to read"): border/background
+   removed here, matching .readonly's unbox below — a writer-mode note is a
+   full-page surface now, not a boxed field, in EITHER role. With no
+   border/background the radius was inert, so it's removed too. The
+   :focus-within outline rule that used to live here is deleted outright,
+   not just suppressed — Samuel: no focus ring on the note body, full stop.
+   min-height on .cm-scroller, NOT .cm-content — putting it on .cm-content
+   breaks internal scrolling. */
+.note-content-cm .cm-editor {
+  margin-bottom: var(--space-2);
+}
+/* max-height dropped (P60 §3): the note is a full-page surface now, not a
+   boxed field — it scrolls with the page. min-height stays so a short/empty
+   note still reads as an editable surface. */
+.note-content-cm .cm-scroller { min-height: 320px; overflow-y: auto; }
+.note-content-cm .cm-content { outline: none; }
+
+/* .hl-comment's view-mode horizontal padding (:1626) perturbs CM6 line
+   metrics — gold bg + dotted underline carry the look without it. */
+.note-content-cm .hl-comment { padding: 0; }
+
+/* ===================== Phase 57 (Writer W-A): in-editor suggestion
+   decorations — mapped (not re-located) hunk-target highlights ===================== */
+/* .hunk-live/.hunk-insert-marker (whole-range strike + point marker) retired
+   Phase 59 — see the Phase 66 block below for the word-level replacement.
+   Grepped clean: no remaining consumers in src/. */
+
+/* ===================== Phase 60 (Writer W-B): suggestion field rework +
+   read-only reading surface (PHASE_SPEC.md §3) ===================== */
+/* .hunk-suggest/.hunk-suggest.active (whole-range highlight) retired Phase 66
+   — replaced by the restored word-level rules below. Grepped clean: no
+   remaining consumers in src/. */
+
+/* ===================== Phase 66 (Writer W-A): word-level in-editor
+   suggestion decorations — P59's Google-Docs fidelity restored on the P60
+   field (PHASE_SPEC.md §1) ===================== */
+/* Struck-through danger tint over a DELETED word-run only (not the whole
+   hunk range — see MarkdownEditor's word-run walk). Same P56 metric lesson
+   as .hl-comment above: padding: 0, or CM6's line metrics shift under the
+   mark. text-decoration doesn't affect layout, so it's safe for the metric
+   CM6 is sensitive about. */
+.note-content-cm .hunk-del {
+  background: var(--danger-bg);
+  text-decoration: line-through;
+  text-decoration-color: var(--danger);
+  padding: 0;
+}
+/* Inline widget carrying an ADDED word-run's actual text (Google-Docs
+   fidelity — not yet part of the doc, real only on approve). Same
+   padding-zero CM6 metric rule; both themes come free via tokens —
+   --sugg-new-text (P61 §4.2), not P59's --navy-deep: dark diverges for
+   legibility on the navy-soft fill. */
+.note-content-cm .hunk-add-inline {
+  background: var(--navy-soft);
+  color: var(--sugg-new-text);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  padding: 0;
+}
+/* Outline, not border/background swap — an outline paints outside the box
+   model and can't perturb CM6 line metrics the way a border would. */
+.note-content-cm .hunk-del.active,
+.note-content-cm .hunk-add-inline.active {
+  outline: 2px solid var(--navy);
+  outline-offset: 1px;
+}
+/* Edge glyph ("±", side -1 widget at the range's `from`) — the P60 ruling's
+   "small edge glyph to differentiate from gold comments". No padding/border
+   (CM6 inline-widget metric rule, W-A §2); danger-colored to read as part of
+   the same suggestion, not a second visual language. */
+.note-content-cm .hunk-glyph {
+  color: var(--danger);
+  font-size: var(--font-size-xs);
+}
+
+/* Reading surface (readOnly prop, W-D sets the wrapper class): a CM6
+   instance rendering a note for a reader shouldn't look like a form field —
+   no box, no focus ring, just styled text on the page. */
+.note-content-cm.readonly .cm-editor {
+  border: none;
+  background: transparent;
+}
+
+/* Review-view's own .hunk .del + .add gap rule (the same landmine, same
+   fix) retired Phase 60 with the review-view pane — see .mcard .old + .new
+   above, the margin-card port of it. */
+
+/* ===================== Phase 60 (Writer W-A): live-preview engine —
+   src/utils/livePreview.js line classes + bullet/checkbox widgets + table
+   styled-raw. Unconditional classes (present whether the line is raw or
+   rendered) so the flip has zero layout shift; only the hidden-mark
+   decorations toggle. Both themes come free via tokens — no media queries
+   (data-theme stamped on <html> per house convention). ===================== */
+/* Headings: display font (matches .wordmark/app chrome) instead of the
+   editor's monospace body font; sizes off the existing type scale, not new
+   literals. W-B drops the fontSize from appHighlightStyle's heading entries
+   (PHASE_SPEC.md §3) — these line classes are what own sizing now. */
+.note-content-cm .cm-lp-h1 { font-family: var(--font-display); font-size: var(--font-size-xl); font-weight: 700; }
+.note-content-cm .cm-lp-h2 { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 700; }
+.note-content-cm .cm-lp-h3 { font-family: var(--font-display); font-size: var(--font-size-md); font-weight: 700; }
+.note-content-cm .cm-lp-h4,
+.note-content-cm .cm-lp-h5,
+.note-content-cm .cm-lp-h6 { font-family: var(--font-display); font-size: var(--font-size-sm); font-weight: 700; }
+
+/* Quote: left rail only (no bg tint) so adjacent/wrapped quote lines read as
+   one continuous bar instead of a stack of boxes. */
+.note-content-cm .cm-lp-quote {
+  border-left: 3px solid var(--border);
+  padding-left: var(--space-3);
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Fenced code: per-line bg (Decoration.line, not a block wrapper — CM6
+   plugin decorations can't replace across line breaks) so a multi-line fence
+   reads as one shaded block with no gaps between its lines. */
+.note-content-cm .cm-lp-code {
+  background: var(--bg);
+  font-family: var(--font-mono);
+}
+
+/* Table: deliberate styled-raw deferral (PHASE_SPEC.md §2) — pipes/dashes
+   stay visible always (never hidden/replaced), just mono + a subtle bg so
+   the block reads as tabular data instead of accidentally half-rendering. */
+.note-content-cm .cm-lp-table {
+  background: var(--bg);
+  font-family: var(--font-mono);
+}
+
+/* List lines: pure-CSS hanging indent. padding-left sets the text column for
+   EVERY line of the item; the marker-bearing line pulls its own first row
+   back out of it (see .cm-lp-li-head below), so the marker sits in the hang
+   and everything else — soft-wrapped rows, lazy-continuation lines — sits on
+   the column. Fixed depth-agnostic indent: nested items keep their own extra
+   offset from the raw markdown's own leading whitespace, which this rule
+   doesn't touch or need to. */
+.note-content-cm .cm-lp-li {
+  padding-left: var(--space-5);
+}
+
+/* The hang itself, on the marker-bearing line ONLY (cm-lp-li-head), sized to
+   the raw marker it stands in for: exactly 2 mono chars, "- ". That is what
+   makes the raw<->rendered flip pixel-stable — raw "- Hello" and rendered
+   "• Hello" both put the text column at padding-left, and BOTH the
+   soft-wrapped rows of this line and any lazy-continuation line of the same
+   item (which is .cm-lp-li WITHOUT -head, so it never takes this indent)
+   land on that same column. The `*` reset is the P60.1 §1.2 root cause,
+   fixed at its source rather than by dropping the indent: text-indent
+   inherits into an inline-block widget and applies a SECOND time inside it,
+   which is what painted the bullet at a negative x and clipped it. */
+.note-content-cm .cm-lp-li-head { text-indent: -2ch; }
+.note-content-cm .cm-lp-li-head * { text-indent: 0; }
+
+/* Bullet/checkbox marker alcove. CM6 metric rule: no horizontal padding or
+   border on an inline widget itself (perturbs line-height/caret metrics) —
+   width comes from inline-block sizing, and marker-to-text spacing comes
+   from the real trailing space character left in the document, not CSS.
+   width: 1ch because the widget stands in for exactly ONE character: the
+   ListMark node is just "-" (the space after it is never replaced, it stays
+   a real doc char), so 1ch is what keeps the flip pixel-stable. No negative
+   margin here — the hang is the line's job now (.cm-lp-li-head). */
+.note-content-cm .cm-lp-bullet {
+  display: inline-block;
+  width: 1ch;
+  text-align: center;
+  color: var(--navy);
+  font-weight: 700;
+}
+.note-content-cm .cm-lp-checkbox {
+  width: var(--space-4);
+  height: var(--space-4);
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--navy);
+  cursor: pointer;
+}
+
+/* ===================== Phase 61 (Writer W-C): task-line checkbox
+   alignment (§4.3) ===================== */
+/* cm-lp-task-head (livePreview.js) always coexists with cm-lp-li-head on a
+   task item's first line — no separate text-indent here, same -2ch hang as
+   the plain bullet above. A comfortable >=16px tap target is wider than the
+   "- " marker's own 2-char footprint the hang was sized for, so this scopes
+   .cm-lp-checkbox's font to the editor's own mono font (off the scope it
+   inherits var(--font-body) from the global `input` rule at :323, which
+   would give it the WRONG "ch") and pulls it back with a negative margin so
+   it still only spends ~1ch of the hang while painting at full width — the
+   excess overhangs left into the item's own padding, which is empty space.
+   Double-class selector, not source order, wins over .cm-lp-li-head's bare
+   rule regardless of where either is declared. */
+.note-content-cm .cm-lp-li-head.cm-lp-task-head .cm-lp-checkbox {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  margin-left: calc(1ch - var(--space-4));
+}
+
+/* §4.1, integration fix: deleting the app's own :focus-within rule above did
+   not remove the focus ring, it UNMASKED CodeMirror's baseTheme default
+   (.cm-focused { outline: 1px dotted #212121 }) that the app rule had been
+   overriding all along — measured as a painted dotted line on the editor's
+   top edge whenever the note body had focus. Samuel's ruling is no focus
+   ring on the note body, full stop, so CM6's own default is suppressed here
+   too. Three classes beats CM6's two, so this wins regardless of the
+   injected-stylesheet order. */
+.note-content-cm .cm-editor.cm-focused { outline: none; }
+
+/* ===================== Phase 63: the note page becomes a page (bounded
+   editor surface) ===================== */
+/* Samuel's hybrid ruling (PHASE_SPEC.md §0): a fixed ~72ch reading column
+   (never full-window-width lines again) living on ONE broad --surface panel
+   — title, meta line, notice bands, and ReviewBar all inside it, same as the
+   body. The P61 unbox stays untouched INSIDE .cm-editor; this is a different,
+   larger box wrapping the whole note.
+
+   The ANTI-FLUIDITY proof (§2.2) is what the sizing below is built around:
+   `width` (not flex-grow) is what fixes the pixel size — a flex item's
+   percentage resolves against the flex CONTAINER's own box, never against
+   "space left after siblings", so .review-margin appearing or leaving next
+   door can't move this element on its own. flex-shrink:0 is load-bearing,
+   not a default left alone: measured live, the default shrink:1 let the
+   surface get proportionally squeezed by up to 236px the moment a card's
+   270px .review-margin had to share .review-layout's box with it — the
+   exact "column width shifts when the margin fills" bug this phase exists
+   to retire, just moved one level down. Zero means the surface holds its
+   width or the row overflows; see the .main-content override below for why
+   it doesn't reach overflow at the gated 1440px viewport.
+
+   §1's own bound check, measured live: 72ch in the editor's actual font (IBM
+   Plex Mono @ --font-size-sm, 14.4px at default zoom) is 622px — under the
+   spec's ~640px floor — so per §1 ("use the nearest bound"), the column is
+   pinned at the literal 640px bound rather than the raw ch value. min(100%,
+   …) is the only mobile rule the WIDTH needs: below the cap the surface just
+   tracks 100% of whatever .review-layout gives it, and since padding is
+   symmetric there's no leftover room for the column to need a separate
+   centering override. */
+.note-page-surface {
+  flex-shrink: 0;
+  width: min(100%, calc(640px + 2 * var(--space-6)));
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card); /* same elevation .mcard/.auth use for a raised panel */
+  padding: var(--space-5) var(--space-6);
+}
+
+@media (max-width: 800px) {
+  /* "Near-edge-to-edge" (PHASE_SPEC.md §1 mobile row): the column's cap
+     never binds this narrow, so shrinking the surface's own horizontal
+     padding is what actually moves the text closer to the viewport edge. */
+  .note-page-surface { padding: var(--space-4) var(--space-3); }
+}
+
+/* .main-content's generic 1060px-cap-plus-padding (:147) is sized for
+   ordinary prose pages; on the note page's ROW layout (.review-layout above
+   1080px — the same breakpoint that flips it to a stacked column below) it
+   left only ~746px at a 1440px viewport — not enough for a pinned 688px page
+   PLUS a 270px margin side by side, which is exactly what forced the shrink
+   flex-shrink:0 above now refuses to do (the row would overflow instead).
+   Scoped to that same >1080px range: the stacked layout below it has no
+   side-by-side contention to relieve, so the app's ordinary mobile/tablet
+   main-content padding (:592) is untouched there. The note page already
+   disciplines its own line length (the 640px-capped surface, above) and
+   manages its own edge spacing (.note-switcher/.note-main padding) at this
+   width, so both the cap AND the padding are redundant here — dropped for
+   this one page rather than raised app-wide. Same :has() pattern as the
+   existing .gcard dropdown-menu rule. Measured live at 1440px with a margin
+   card showing: this alone still fell 88px short (894px available, 982px
+   needed); the review-layout gap below closes the rest without touching the
+   margin's own protected width. */
+@media (min-width: 1081px) {
+  .main-content:has(> .note-layout) { max-width: none; padding: 0; }
+
+  /* The 88px above, minus the ~24px .review-layout's own gap already spent —
+     trimmed to --space-4 here (was --space-6, shared with every other
+     .review-layout consumer) closes it exactly at the gated 1440px viewport,
+     confirmed live: no horizontal scroll with a card showing. */
+  .note-layout .review-layout { gap: var(--space-4); }
+}
+
+/* ===================== Phase 68: post-review contrast fixes ===================== */
+
+/* Quick-switcher context label on the highlighted (hover/keyboard) row (ui
+   review F3): dark's --muted composited over the --navy-soft highlight
+   measured 3.78:1 — routed through a token so only dark brightens it; light
+   resolves back to --muted, byte-identical. Added property only —
+   .qs-row-context's own rules (:1177, :1343) are untouched. */
+.qs-row:hover .qs-row-context, .qs-row.qs-row-active .qs-row-context { color: var(--qs-active-context); }

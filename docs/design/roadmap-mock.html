@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — roadmap page mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pine: #003478; --pine-soft: #E9F0FB; --blaze: #0E9CD6; --blaze-soft: #E1F2FA;
+    --paper: #F4F6FA; --card: #FFFFFF; --ink: #16233A; --muted: #5C6670; --mist: #DDE3ED;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--blaze); outline-offset: 2px; border-radius: 4px; }
+
+  header { background: var(--card); border-bottom: 1px solid var(--mist); padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--ink); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .wordmark .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--pine); display: inline-block; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-right a { font-size: 0.88rem; color: var(--ink); text-decoration: none; font-weight: 500; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--pine); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.75rem; }
+
+  .app-body { display: flex; min-height: calc(100vh - 56px); }
+  aside { width: 232px; flex: none; padding: 1.5rem 0.9rem; border-right: 1px solid var(--mist); }
+  .side-label { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 0.6rem; margin: 1.1rem 0 0.35rem; }
+  .side-label:first-child { margin-top: 0; }
+  aside a { display: flex; justify-content: space-between; padding: 0.42rem 0.6rem; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+  aside a:hover { background: var(--pine-soft); }
+  aside a.active { background: var(--pine); color: #fff; }
+  aside a .mini { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  aside a.active .mini { color: #CBD9EF; }
+
+  main { flex: 1; padding: 2.25rem 2.5rem; max-width: 1000px; }
+  .crumb { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; }
+  .crumb:hover { color: var(--pine); }
+  .page-head { display: flex; align-items: baseline; justify-content: space-between; margin: 0.4rem 0 0.2rem; }
+  h1 { font-family: var(--font-display); font-size: 2.1rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+  .journey { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+  .journey b { color: var(--pine); font-weight: 500; }
+  .btn { font-weight: 600; font-size: 0.85rem; border-radius: 8px; padding: 0.45rem 0.9rem; cursor: pointer; border: 1px solid transparent; font-family: var(--font-body); }
+  .btn-primary { background: var(--pine); color: #fff; }
+  .btn-primary:hover { background: #002A61; }
+
+  /* the track */
+  .trail { position: relative; margin-top: 2.5rem; }
+  .trail svg.rail { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .rail .base { fill: none; stroke: var(--mist); stroke-width: 3; stroke-dasharray: 7 7; stroke-linecap: round; }
+  .rail .done { fill: none; stroke: var(--pine); stroke-width: 3.5; stroke-linecap: round; }
+
+  .tgrid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4.5rem 2.5rem; }
+  .stop { display: flex; flex-direction: column; align-items: center; }
+
+  .marker { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--pine); background: var(--card); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.85rem; font-weight: 700; flex: none; cursor: pointer; }
+  .marker.done { background: var(--pine); }
+  .marker.current { border-color: var(--blaze); color: var(--blaze); box-shadow: 0 0 0 5px var(--blaze-soft); }
+  @media (prefers-reduced-motion: no-preference) {
+    .marker.current { animation: here 2.4s ease-in-out infinite; }
+    @keyframes here { 0%,100% { box-shadow: 0 0 0 5px var(--blaze-soft); } 50% { box-shadow: 0 0 0 9px var(--blaze-soft); } }
+  }
+  .here-tag { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--blaze); margin-top: 0.4rem; font-weight: 500; }
+
+  .gcard { margin-top: 0.8rem; background: var(--card); border: 1px solid var(--mist); border-radius: 12px; padding: 0.9rem 1rem; width: 100%; border-top: 3px solid var(--mist); }
+  .gcard.done { border-top-color: var(--pine); }
+  .gcard.current { border-top-color: var(--blaze); }
+  .gcard h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin: 0 0 0.35rem; display: flex; justify-content: space-between; gap: 0.5rem; }
+  .gcard h3 .tools { display: flex; gap: 0.3rem; opacity: 0.35; }
+  .gcard:hover h3 .tools { opacity: 1; }
+  .tools button { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.85rem; padding: 0.1rem 0.25rem; border-radius: 4px; }
+  .tools button:hover { background: var(--pine-soft); color: var(--pine); }
+  .mini-route { display: flex; align-items: center; gap: 3px; margin: 0.35rem 0 0.5rem; }
+  .mini-route i { flex: 1; height: 4px; border-radius: 2px; background: var(--mist); }
+  .mini-route i.done { background: var(--pine); }
+  .mini-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .task { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; padding: 0.2rem 0; }
+  .task input { accent-color: var(--pine); }
+  .task.donetask { color: var(--muted); text-decoration: line-through; }
+  .addtask { background: none; border: none; color: var(--pine); font-weight: 600; font-size: 0.8rem; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 6px; margin-top: 0.3rem; }
+  .addtask:hover { background: var(--pine-soft); }
+
+  footer { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 0.72rem; padding: 2rem; border-top: 1px solid var(--mist); margin-top: 3rem; }
+  @media (max-width: 800px) { aside { display: none; } .tgrid { grid-template-columns: 1fr; } .trail svg.rail { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <a class="wordmark" href="#"><span class="wp"></span>Sofos</a>
+  <div class="header-right"><a href="#">Settings</a><span class="avatar">AD</span></div>
+</header>
+<div class="app-body">
+  <aside>
+    <div class="side-label">Yours</div>
+    <a href="#">Home <span class="mini">2</span></a>
+    <a href="#" class="active">Work <span class="mini">3</span></a>
+    <div class="side-label">System</div>
+    <a href="#">Trash <span class="mini">2</span></a>
+  </aside>
+  <main>
+    <a class="crumb" href="#">Work /</a>
+    <div class="page-head">
+      <h1>Roadmap</h1>
+      <button class="btn btn-primary">+ Goal</button>
+    </div>
+    <div class="journey">2 of 5 waypoints reached · next: <b>Hire first support engineer</b></div>
+
+    <div class="trail">
+      <!-- Curved serpentine rail: row 1 L→R, sweeping turn, row 2 R→L. Coordinates
+           are illustrative for the mock; the real implementation draws beziers
+           through the measured marker centers it already collects. -->
+      <svg class="rail" viewBox="0 0 900 560" preserveAspectRatio="none" aria-hidden="true">
+        <path class="base" d="M 150 15 C 280 15 320 15 450 15 C 580 15 620 15 750 15 C 870 15 870 150 750 150 C 700 150 560 130 450 220 C 380 278 300 300 150 300" />
+        <path class="done" d="M 150 15 C 280 15 320 15 450 15" />
+      </svg>
+      <div class="tgrid">
+        <div class="stop">
+          <span class="marker done" title="Completed">✓</span>
+          <div class="gcard done">
+            <h3>Ship v1 <span class="tools"><button aria-label="Edit">✎</button></span></h3>
+            <div class="mini-route"><i class="done"></i><i class="done"></i></div>
+            <span class="mini-label">2/2 tasks · reached Jul 19</span>
+          </div>
+        </div>
+        <div class="stop">
+          <span class="marker done" title="Completed">✓</span>
+          <div class="gcard done">
+            <h3>Grow the team <span class="tools"><button aria-label="Edit">✎</button></span></h3>
+            <span class="mini-label">no tasks · reached Jul 20</span>
+          </div>
+        </div>
+        <div class="stop">
+          <span class="marker current" title="You are here">●</span>
+          <span class="here-tag">you are here</span>
+          <div class="gcard current">
+            <h3>Hire first support engineer <span class="tools"><button aria-label="Edit">✎</button></span></h3>
+            <div class="mini-route"><i class="done"></i><i></i><i></i></div>
+            <span class="mini-label">1/3 tasks</span>
+            <label class="task donetask"><input type="checkbox" checked> Write job post</label>
+            <label class="task"><input type="checkbox"> Post to job boards</label>
+            <label class="task"><input type="checkbox"> First interviews</label>
+            <button class="addtask">+ Task</button>
+          </div>
+        </div>
+        <!-- row 2, serpentine: right → left -->
+        <div class="stop" style="grid-column: 3">
+          <span class="marker" title="Not started"></span>
+          <div class="gcard">
+            <h3>Expand to a second timezone <span class="tools"><button aria-label="Edit">✎</button></span></h3>
+            <div class="mini-route"><i></i></div>
+            <span class="mini-label">0/1 tasks</span>
+            <label class="task"><input type="checkbox"> LA maybe?</label>
+            <button class="addtask">+ Task</button>
+          </div>
+        </div>
+        <div class="stop" style="grid-column: 1; grid-row: 2">
+          <span class="marker" title="Not started"></span>
+          <div class="gcard">
+            <h3>Juice <span class="tools"><button aria-label="Edit">✎</button></span></h3>
+            <span class="mini-label">no tasks yet</span>
+            <button class="addtask">+ Task</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<footer>sofos · Work roadmap · Samuel Shmidman © 2026</footer>
+</body>
+</html>

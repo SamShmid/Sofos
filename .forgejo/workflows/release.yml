@@ -1,0 +1,265 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# All workflows in this repository share one self-hosted Docker daemon and
+# fixed host ports/container names. Queue them instead of allowing one run's
+# defensive cleanup to remove another run's containers. Release runs must
+# never be canceled in favor of a later branch push.
+concurrency:
+  group: sofos-shared-runner-host-resources
+  cancel-in-progress: false
+
+# Set these as repository variables in your Forgejo instance:
+#   REGISTRY_HOST  e.g. git.example.com          (container registry host)
+#   REGISTRY_USER  e.g. your-forgejo-username
+#   IMAGE_PATH     e.g. owner/sofos              (lowercase; Docker requires it)
+# and a REGISTRY_TOKEN secret (a PAT with write:package + write:repository).
+env:
+  REGISTRY: ${{ vars.REGISTRY_HOST }}
+  REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+  IMAGE: ${{ vars.REGISTRY_HOST }}/${{ vars.IMAGE_PATH }}
+
+jobs:
+  # Self-contained duplicate of test.yml's api job — workflows can't import
+  # each other, and a broken tag must not ship.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start throwaway mongo
+        run: |
+          # Recover from a previous interrupted job on the persistent runner.
+          docker rm -fv sofos-ci-test-mongo 2>/dev/null || true
+          docker run -d --name sofos-ci-test-mongo -p 28017:27017 mongo:7.0
+
+      - name: Install backend deps
+        working-directory: project/backend
+        run: npm ci
+
+      - name: Seed, boot server, run live API suite
+        working-directory: project/backend
+        env:
+          MONGODB_URI: mongodb://localhost:28017/sofos-ci-test
+          JWT_SECRET: ci-only-secret-not-production-use
+          PORT: 3301
+          SCAN_ENABLED: "false"
+        run: |
+          npm run seed
+          node server.js > server.log 2>&1 &
+
+          up=0
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3301/api/health > /dev/null; then
+              up=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$up" -ne 1 ]; then
+            echo "server never came up after 30s, server log follows:"
+            cat server.log
+            exit 1
+          fi
+
+          API_URL=http://localhost:3301/api npm run test:api
+
+      - name: Run legacy-data migration suite
+        working-directory: project/backend
+        env:
+          MONGODB_URI: mongodb://localhost:28017/sofos-ci-migration-test
+        run: npm run test:migration
+
+      - name: Remove throwaway mongo
+        if: always()
+        run: docker rm -fv sofos-ci-test-mongo 2>/dev/null || true
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sanity-check docker CLI is available
+        run: docker version
+
+      - name: Build image
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          docker build --build-arg VERSION=$TAG -t $IMAGE:$TAG -t $IMAGE:latest .
+
+      - name: Run built image with throwaway volumes
+        # Twin of .forgejo/workflows/docker-smoke.yml's "Run container" step
+        # — duplication between the two workflows is expected (see that
+        # file's header comment); this one smoke-tests the exact image about
+        # to be pushed, before it's pushed.
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          docker rm -fv sofos-release-smoke 2>/dev/null || true
+          docker volume rm sofos-release-smoke-data sofos-release-smoke-uploads sofos-release-smoke-backups 2>/dev/null || true
+
+          docker volume create sofos-release-smoke-data
+          docker volume create sofos-release-smoke-uploads
+          docker volume create sofos-release-smoke-backups
+
+          docker run -d --name sofos-release-smoke \
+            -p 3400:3000 \
+            -v sofos-release-smoke-data:/data/db \
+            -v sofos-release-smoke-uploads:/app/uploads \
+            -v sofos-release-smoke-backups:/app/backups \
+            -e JWT_SECRET=ci-only-release-smoke-secret-not-production-use \
+            $IMAGE:$TAG
+
+      - name: Smoke-test the built image before it ships
+        # Twin of .forgejo/workflows/docker-smoke.yml's "Run smoke gates"
+        # step — same gate sequence, same container name substituted
+        # throughout. A broken image must fail HERE, before anything is
+        # pushed to the registry.
+        run: |
+          set -e
+          BASE=http://localhost:3400/api
+          ROOT=http://localhost:3400
+
+          jget() { node -pe "JSON.parse(require('fs').readFileSync('/tmp/resp.json','utf8'))$1"; }
+
+          echo "== Waiting for /api/health (mongod boot, up to 120s) =="
+          up=0
+          for i in $(seq 1 120); do
+            if curl -sf "$BASE/health" -o /dev/null; then up=1; break; fi
+            sleep 1
+          done
+          if [ "$up" -ne 1 ]; then
+            echo "FAIL: container never became healthy after 120s; docker logs follow:"
+            docker logs sofos-release-smoke
+            exit 1
+          fi
+          echo "PASS: container healthy"
+
+          echo "== Registering smoke user + workspace/project =="
+          curl -s -X POST "$BASE/auth/register" -H "Content-Type: application/json" \
+            -d '{"username":"smoketest","password":"smoketestpass1"}' -o /tmp/resp.json
+          TOKEN=$(jget .token)
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "undefined" ]; then
+            echo "FAIL: register did not return a token"; cat /tmp/resp.json; exit 1
+          fi
+
+          curl -s -X POST "$BASE/workspaces" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d '{"name":"Smoke WS"}' -o /tmp/resp.json
+          WS_ID=$(jget .data._id)
+
+          curl -s -X POST "$BASE/projects" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d "{\"name\":\"Smoke Project\",\"workspace\":\"$WS_ID\"}" -o /tmp/resp.json
+          PROJ_ID=$(jget .data._id)
+          echo "PASS: register + workspace + project set up"
+
+          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=" | base64 -d > /tmp/smoke.png
+
+          echo "== Waiting for scanner warm-up: clean PNG finalize, up to 180s =="
+          scan_status=""
+          deadline=$((SECONDS + 180))
+          while [ $SECONDS -lt $deadline ]; do
+            curl -s -X POST "$BASE/uploads" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              -d "{\"filename\":\"smoke.png\",\"project\":\"$PROJ_ID\"}" -o /tmp/resp.json
+            UPLOAD_ID=$(jget .data.uploadId)
+            curl -s -X PUT "$BASE/uploads/$UPLOAD_ID/chunks/0" -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/octet-stream" --data-binary @/tmp/smoke.png -o /dev/null
+            curl -s -X POST "$BASE/uploads/$UPLOAD_ID/finalize" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              -d '{}' -o /tmp/resp.json
+            scan_status=$(jget .data.scanStatus)
+            echo "finalize attempt: scanStatus=$scan_status"
+            if [ "$scan_status" = "clean" ]; then break; fi
+            sleep 5
+          done
+          if [ "$scan_status" != "clean" ]; then
+            echo "FAIL: scanner never became ready within 180s (last scanStatus=$scan_status)"
+            docker logs sofos-release-smoke
+            exit 1
+          fi
+          echo "PASS: clamd warm; clean PNG upload finalizes with scanStatus=clean"
+
+          echo "== Gate: register+login round-trip =="
+          LOGIN_CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" -X POST "$BASE/auth/login" -H "Content-Type: application/json" \
+            -d '{"username":"smoketest","password":"smoketestpass1"}')
+          if [ "$LOGIN_CODE" != "200" ]; then
+            echo "FAIL: login round-trip -> $LOGIN_CODE"; cat /tmp/resp.json; exit 1
+          fi
+          echo "PASS: register+login round-trip 200"
+
+          echo "== Gate: EICAR upload -> 422 =="
+          EICAR_PART1='X5O!P%@AP[4\PZX54(P^)7CC)7}'
+          EICAR_PART2='$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+          printf '%s%s' "$EICAR_PART1" "$EICAR_PART2" > /tmp/smoke_eicar.txt
+
+          curl -s -X POST "$BASE/uploads" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d "{\"filename\":\"smoke-eicar.txt\",\"project\":\"$PROJ_ID\"}" -o /tmp/resp.json
+          EICAR_UPLOAD_ID=$(jget .data.uploadId)
+          curl -s -X PUT "$BASE/uploads/$EICAR_UPLOAD_ID/chunks/0" -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/octet-stream" --data-binary @/tmp/smoke_eicar.txt -o /dev/null
+          EICAR_CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" -X POST "$BASE/uploads/$EICAR_UPLOAD_ID/finalize" \
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{}')
+          if [ "$EICAR_CODE" != "422" ]; then
+            echo "FAIL: EICAR upload finalize -> $EICAR_CODE (expected 422)"; cat /tmp/resp.json; exit 1
+          fi
+          echo "PASS: EICAR upload finalize -> 422"
+
+          echo "== Gate: clamd socket exists in-container =="
+          if ! docker exec sofos-release-smoke test -S /var/run/clamav/clamd.ctl; then
+            echo "FAIL: /var/run/clamav/clamd.ctl socket missing"
+            exit 1
+          fi
+          echo "PASS: clamd socket present"
+
+          echo "== Gate: GET / serves the SPA =="
+          ROOT_CODE=$(curl -s -o /tmp/root.html -w "%{http_code}" "$ROOT/")
+          if [ "$ROOT_CODE" != "200" ] || ! grep -q '<div id="root"' /tmp/root.html; then
+            echo "FAIL: GET / -> $ROOT_CODE, or missing <div id=\"root\">"
+            cat /tmp/root.html
+            exit 1
+          fi
+          echo "PASS: GET / serves the SPA (200, <div id=\"root\"> present)"
+
+          echo "== Gate: restart persistence =="
+          docker restart sofos-release-smoke
+          up=0
+          for i in $(seq 1 120); do
+            if curl -sf "$BASE/health" -o /dev/null; then up=1; break; fi
+            sleep 1
+          done
+          if [ "$up" -ne 1 ]; then
+            echo "FAIL: container never became healthy again after restart; docker logs follow:"
+            docker logs sofos-release-smoke
+            exit 1
+          fi
+          RELOGIN_CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" -X POST "$BASE/auth/login" -H "Content-Type: application/json" \
+            -d '{"username":"smoketest","password":"smoketestpass1"}')
+          if [ "$RELOGIN_CODE" != "200" ]; then
+            echo "FAIL: login after restart -> $RELOGIN_CODE"; cat /tmp/resp.json; exit 1
+          fi
+          echo "PASS: restart persistence — container healthy again, registered login still works"
+
+          echo "== All release smoke gates passed =="
+
+      - name: Teardown release smoke container
+        if: always()
+        run: |
+          docker rm -fv sofos-release-smoke 2>/dev/null || true
+          docker volume rm sofos-release-smoke-data sofos-release-smoke-uploads sofos-release-smoke-backups || true
+
+      - name: Push image
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          echo "${{ secrets.REGISTRY_TOKEN }}" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
+          docker push $IMAGE:$TAG
+          docker push $IMAGE:latest
+
+      - name: Create Forgejo release
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          curl -sf -X POST "https://$REGISTRY/api/v1/repos/${GITHUB_REPOSITORY}/releases" \
+            -H "Authorization: token ${{ secrets.REGISTRY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"Image: $IMAGE:$TAG\"}"

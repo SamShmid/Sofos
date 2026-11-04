@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — design language (blue)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #003478;          /* primary — your existing brand blue */
+    --navy-2: #00529b;        /* secondary blue (you already have this) */
+    --navy-soft: #E9F0FB;     /* tint for hovers / done-state fills */
+    --azure: #0E9CD6;         /* the ONE accent: "you are here" only */
+    --azure-soft: #E1F2FA;
+    --paper: #F4F6FA;         /* your existing background */
+    --card: #FFFFFF;
+    --ink: #16233A;
+    --muted: #5A6577;
+    --mist: #DDE3ED;          /* your existing border */
+    --danger: #B42318;        /* destructive stays red — universal */
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); line-height: 1.55; }
+  main { max-width: 980px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+  h1, h2 { font-family: var(--font-display); color: var(--ink); letter-spacing: -0.01em; }
+  h1 { font-size: 2.4rem; font-weight: 700; margin: 0 0 0.25rem; }
+  h2 { font-size: 1.3rem; font-weight: 600; margin: 3.5rem 0 1rem; padding-top: 2rem; border-top: 1px solid var(--mist); }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  .lede { color: var(--muted); max-width: 62ch; margin-top: 0.5rem; }
+  .lede b { color: var(--navy); }
+  :focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; border-radius: 4px; }
+
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
+  .swatch { border: 1px solid var(--mist); border-radius: 10px; overflow: hidden; background: var(--card); }
+  .swatch .chip { height: 64px; }
+  .swatch figcaption { padding: 0.5rem 0.75rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .swatch figcaption b { display: block; color: var(--ink); font-size: 0.8rem; font-family: var(--font-body); font-weight: 600; }
+  figure { margin: 0; }
+
+  .type-row { display: flex; align-items: baseline; gap: 1.25rem; padding: 0.6rem 0; border-bottom: 1px dashed var(--mist); }
+  .type-row code { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); min-width: 200px; }
+  .t-display { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; letter-spacing: -0.01em; }
+  .t-title { font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; }
+  .t-section { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  .t-body { font-size: 0.95rem; }
+  .t-meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+
+  .route-demo { background: var(--card); border: 1px solid var(--mist); border-radius: 12px; padding: 2.5rem 2rem 2rem; }
+  .route { display: flex; align-items: center; }
+  .leg { flex: 1; height: 0; border-top: 3px dashed var(--mist); }
+  .leg.done { border-top: 3px solid var(--navy); }
+  .waypoint { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--navy); background: var(--card); flex: none; }
+  .waypoint.done { background: var(--navy); }
+  .waypoint.current { border-color: var(--azure); box-shadow: 0 0 0 4px var(--azure-soft); }
+  .route-labels { display: flex; justify-content: space-between; margin-top: 0.75rem; }
+  .route-labels span { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); max-width: 9rem; }
+  .route-labels .here { color: var(--azure); font-weight: 500; }
+
+  .mini-route { display: inline-flex; align-items: center; gap: 3px; }
+  .mini-route i { width: 14px; height: 4px; border-radius: 2px; background: var(--mist); }
+  .mini-route i.done { background: var(--navy); }
+  .mini-label { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); margin-left: 0.5rem; }
+
+  .btn { font-family: var(--font-body); font-weight: 600; font-size: 0.88rem; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; border: 1px solid transparent; }
+  .btn-primary { background: var(--navy); color: #fff; }
+  .btn-primary:hover { background: #002A61; }
+  .btn-quiet { background: transparent; color: var(--navy); border-color: var(--mist); }
+  .btn-quiet:hover { background: var(--navy-soft); }
+  .btn-danger { background: transparent; color: var(--danger); border-color: #ECC8C5; }
+  .btn-danger:hover { background: #FBEAE9; }
+  .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+
+  .chips-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .role-chip { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 99px; border: 1px solid var(--mist); color: var(--muted); background: var(--card); }
+  .role-chip.owner { border-color: var(--navy); color: var(--navy); background: var(--navy-soft); }
+  .role-chip.writer { border-color: var(--navy); color: var(--navy); }
+  .role-chip.suggester { border-color: var(--azure); color: #0A6E97; background: var(--azure-soft); }
+  .role-chip.pending { border-style: dashed; }
+
+  .toast { display: inline-flex; align-items: center; gap: 0.75rem; background: var(--ink); color: #fff; border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.88rem; box-shadow: 0 8px 24px rgba(16,24,40,0.25); }
+  .toast .tick { color: #7FD4F2; font-weight: 700; }
+
+  .confirm { background: var(--card); border: 1px solid var(--mist); border-left: 4px solid var(--danger); border-radius: 10px; padding: 1rem 1.25rem; max-width: 26rem; }
+  .confirm h3 { margin: 0 0 0.25rem; font-size: 0.95rem; font-family: var(--font-body); font-weight: 600; color: var(--ink); }
+  .confirm p { margin: 0 0 0.9rem; font-size: 0.85rem; color: var(--muted); }
+
+  .empty { text-align: center; border: 1.5px dashed var(--mist); border-radius: 12px; padding: 2.25rem 1rem; background: var(--card); max-width: 30rem; }
+  .empty .glyph { font-size: 1.4rem; color: var(--navy); }
+  .empty p { color: var(--muted); font-size: 0.9rem; margin: 0.4rem 0 1rem; }
+
+  .field { max-width: 22rem; }
+  .field label { display: block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+  .field input { width: 100%; font-family: var(--font-body); font-size: 0.95rem; padding: 0.55rem 0.75rem; border: 1px solid var(--mist); border-radius: 8px; background: var(--card); color: var(--ink); }
+  .field input:focus { outline: 2px solid var(--azure); outline-offset: 1px; border-color: transparent; }
+  .field .hint { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+
+  .note { background: var(--navy-soft); border-radius: 10px; padding: 0.9rem 1.1rem; font-size: 0.85rem; color: var(--ink); max-width: 62ch; }
+  .note b { color: var(--navy); }
+</style>
+</head>
+<body>
+<main>
+  <span class="eyebrow">Proposal · blue · not implemented</span>
+  <h1>Sofos design language</h1>
+  <p class="lede">Same trail-map idea, recolored to your blue. <b>Navy</b> stays the brand and does the primary work; a single bright <b>azure</b> is spent only on <em>where you are now</em>. Destructive actions stay red because red is what "delete" means everywhere. No green, no orange.</p>
+
+  <h2>Palette — all blue, one accent</h2>
+  <div class="swatches">
+    <figure class="swatch"><div class="chip" style="background:#003478"></div><figcaption><b>Navy</b>#003478 · primary (yours)</figcaption></figure>
+    <figure class="swatch"><div class="chip" style="background:#00529b"></div><figcaption><b>Navy-2</b>#00529b · secondary (yours)</figcaption></figure>
+    <figure class="swatch"><div class="chip" style="background:#0E9CD6"></div><figcaption><b>Azure</b>#0E9CD6 · “you are here” only</figcaption></figure>
+    <figure class="swatch"><div class="chip" style="background:#F4F6FA; border-bottom:1px solid #DDE3ED"></div><figcaption><b>Paper</b>#F4F6FA · background (yours)</figcaption></figure>
+    <figure class="swatch"><div class="chip" style="background:#16233A"></div><figcaption><b>Ink</b>#16233A · text</figcaption></figure>
+    <figure class="swatch"><div class="chip" style="background:#B42318"></div><figcaption><b>Danger</b>#B42318 · destructive only</figcaption></figure>
+  </div>
+  <p class="lede" style="margin-top:1rem">The trick that makes it feel designed rather than monochrome: navy is <em>everywhere</em>, so it stops being special — the azure is the only thing on any screen that isn't navy or gray, so your eye goes straight to "you are here." That's the whole point of holding one accent in reserve.</p>
+
+  <h2>Type (unchanged — you liked it)</h2>
+  <div class="type-row"><code>display · Bricolage 700</code><span class="t-display">Work</span></div>
+  <div class="type-row"><code>title · Bricolage 600</code><span class="t-title">Marketing site</span></div>
+  <div class="type-row"><code>section · Plex Mono 500</code><span class="t-section">Links · 2</span></div>
+  <div class="type-row"><code>body · Public Sans 400</code><span class="t-body">Public marketing pages, separate from the app itself.</span></div>
+  <div class="type-row"><code>meta · Plex Mono 400</code><span class="t-meta">writer · expires 2026-09-01 · YT-U2MLMBKD</span></div>
+
+  <h2>The signature: waypoint routes</h2>
+  <div class="route-demo">
+    <div class="route">
+      <span class="waypoint done"></span><span class="leg done"></span>
+      <span class="waypoint done"></span><span class="leg done"></span>
+      <span class="waypoint current"></span><span class="leg"></span>
+      <span class="waypoint"></span><span class="leg"></span>
+      <span class="waypoint"></span>
+    </div>
+    <div class="route-labels">
+      <span>Ship v1</span><span>Accessibility audit</span><span class="here">Public beta — you are here</span><span>Launch campaign</span><span>Expand timezone</span>
+    </div>
+  </div>
+  <p><span class="mini-route"><i class="done"></i><i class="done"></i><i class="done"></i><i></i><i></i></span><span class="mini-label">3 of 5 waypoints — same idea, replacing every progress bar</span></p>
+
+  <h2>Buttons, chips, feedback</h2>
+  <div class="btn-row">
+    <button class="btn btn-primary">+ Goal</button>
+    <button class="btn btn-quiet">History</button>
+    <button class="btn btn-danger">Move to trash</button>
+  </div>
+  <p class="chips-row" style="margin-top:1rem">
+    <span class="role-chip owner">owner</span>
+    <span class="role-chip writer">writer</span>
+    <span class="role-chip suggester">suggester</span>
+    <span class="role-chip">reader</span>
+    <span class="role-chip pending">pending</span>
+  </p>
+  <p style="margin-top:1.25rem"><span class="toast"><span class="tick">✓</span> Suggestion sent for approval</span></p>
+  <div class="confirm">
+    <h3>Move “Juice” to trash?</h3>
+    <p>Its tasks stay assigned and everything can be restored from Trash.</p>
+    <div class="btn-row"><button class="btn btn-danger">Move to trash</button><button class="btn btn-quiet">Keep it</button></div>
+  </div>
+
+  <h2>Empty states &amp; forms</h2>
+  <div class="empty">
+    <div class="glyph">◎</div>
+    <p>No waypoints on this route yet.<br>Chart the first goal and the trail draws itself.</p>
+    <button class="btn btn-primary">+ Goal</button>
+  </div>
+  <div class="field" style="margin-top:1.5rem">
+    <label for="d1">Goal title</label>
+    <input id="d1" value="Public beta">
+    <div class="hint">Shown on the waypoint card. 120 characters max.</div>
+  </div>
+
+  <h2>One optional extra</h2>
+  <p class="note"><b>Rename the header</b> from “Project Management Center” (a category) to <b>Sofos</b> (a name) — the advisor who taught structured delegation, which is exactly what your suggester/agent system does. Totally your call; the redesign works either way.</p>
+</main>
+</body>
+</html>

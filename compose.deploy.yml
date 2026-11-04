@@ -1,0 +1,33 @@
+# For servers that PULL released images from the registry.
+# docker-compose.yml (repo root) stays the build-locally file for dev/CI.
+services:
+  sofos:
+    image: ${SOFOS_IMAGE:-registry.example.com/owner/sofos}:${SOFOS_TAG:-latest}
+    ports:
+      - "${SOFOS_PORT:-3000}:3000"
+    env_file: .env
+    volumes:
+      - sofos-mongo-data:/data/db
+      - sofos-uploads:/app/uploads
+      - sofos-backups:/app/backups
+      - sofos-logs:/app/logs
+    restart: unless-stopped
+    # Belt for stdout/stderr: the app's own activity/mongod logs live on the
+    # sofos-logs volume with in-app retention; this caps the docker json-file
+    # driver so console output can't grow unbounded across months of uptime.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+
+volumes:
+  sofos-mongo-data:
+  sofos-uploads:
+  sofos-backups:
+  sofos-logs:
