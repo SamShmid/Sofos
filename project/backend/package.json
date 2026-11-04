@@ -13,8 +13,8 @@
     "migrate:sofos-v4": "node scripts/migrate-sofos-v4.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Samuel Shmidman",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
