@@ -1,4 +1,12 @@
-const { body, param } = require("express-validator");
+const { body, param, query } = require("express-validator");
+
+// Both list filters go straight into a find(); malformed ids must be a 400 here,
+// not a CastError 500.
+const listNoteRules = [
+  query("workspace").optional().isMongoId().withMessage("Invalid workspace ID"),
+  query("project").optional().isMongoId().withMessage("Invalid project ID"),
+  query("includeSubprojects").optional().isIn(["1"]).withMessage("Invalid includeSubprojects value"),
+];
 
 const createNoteRules = [
   body("title")
@@ -11,9 +19,7 @@ const createNoteRules = [
   body("content")
     .optional()
     .isString()
-    .withMessage("Content must be text")
-    .isLength({ max: 50000 })
-    .withMessage("Content cannot exceed 50000 characters"),
+    .withMessage("Content must be text"),
 
   body("workspace")
     .optional()
@@ -38,9 +44,7 @@ const updateNoteRules = [
   body("content")
     .optional()
     .isString()
-    .withMessage("Content must be text")
-    .isLength({ max: 50000 })
-    .withMessage("Content cannot exceed 50000 characters"),
+    .withMessage("Content must be text"),
 
   body("workspace")
     .optional()
@@ -51,6 +55,11 @@ const updateNoteRules = [
     .optional()
     .isMongoId()
     .withMessage("Invalid project ID"),
+
+  body("commit")
+    .optional()
+    .isBoolean()
+    .withMessage("commit must be true or false"),
 ];
 
 const noteIdRules = [
@@ -58,6 +67,7 @@ const noteIdRules = [
 ];
 
 module.exports = {
+  listNoteRules,
   createNoteRules,
   updateNoteRules,
   noteIdRules,

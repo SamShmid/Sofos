@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — mock4: Draggable roadmap canvas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B1220; --surface: #121C2E; --panel: #182640; --border: #24344F;
+    --text: #E8EDF5; --muted: #8B98AB; --navy-soft: #1B2A44;
+    --accent: #4FC3F7; --accent-deep: #2196D6; --done: #3D6BB5;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+
+  .mock-banner { max-width: 1200px; margin: 0 auto; padding: 2.2rem 1.5rem 1rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-family: var(--font-display); font-size: 1.8rem; margin: .3rem 0 .4rem; }
+  .lede { color: var(--muted); max-width: 76ch; font-size: .92rem; margin: 0 0 .4rem; }
+  .lede b { color: var(--text); }
+  .try { font-family: var(--font-mono); font-size: .78rem; color: var(--accent); }
+
+  .wrap { max-width: 1200px; margin: 1rem auto 3rem; padding: 0 1.5rem; }
+  .meta-line { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); margin-bottom: .8rem; }
+  .meta-line b { color: var(--accent); font-weight: 500; }
+
+  #canvas { position: relative; height: 640px; border: 1px solid var(--border); border-radius: 12px; background:
+    radial-gradient(circle at 1px 1px, #1A2740 1px, transparent 0); background-size: 26px 26px; overflow: hidden; }
+  #wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  .gcard { position: absolute; width: 290px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: .85rem 1rem 1rem; cursor: grab; user-select: none; box-shadow: 0 4px 14px rgba(0,0,0,.35); touch-action: none; }
+  .gcard:active { cursor: grabbing; }
+  .gcard.dragging { box-shadow: 0 10px 28px rgba(0,0,0,.55); z-index: 30; }
+  .gcard.current { border-top: 3px solid var(--accent); }
+  .gcard.done { border-top: 3px solid var(--done); }
+  .gcard h3 { font-family: var(--font-display); font-size: 1.02rem; margin: 0 0 .3rem; padding-right: 3.4rem; }
+  .gcard .desc { color: var(--muted); font-size: .84rem; margin: 0 0 .5rem; }
+  .tools { position: absolute; top: .7rem; right: .8rem; display: flex; gap: .45rem; color: var(--muted); font-size: .8rem; }
+  .tools span { cursor: pointer; }
+  .assign { width: 100%; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+    padding: .45rem .6rem; font-family: var(--font-body); font-size: .85rem; }
+  .tasksline { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); margin-bottom: .45rem; }
+  .tasksline a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  .marker { position: absolute; width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--done); background: var(--bg);
+    transform: translate(-50%, -50%); pointer-events: none; z-index: 10; }
+  .marker.done { background: var(--done); display: flex; align-items: center; justify-content: center; }
+  .marker.done::after { content: "✓"; color: #fff; font-size: .8rem; }
+  .marker.current { border-color: var(--accent); box-shadow: 0 0 0 6px rgba(79,195,247,.18); }
+  .marker.current::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); margin: auto; }
+  .youarehere { position: absolute; transform: translate(-50%, -100%); font-family: var(--font-mono); font-size: .68rem;
+    letter-spacing: .14em; color: var(--accent); pointer-events: none; z-index: 20; white-space: nowrap;
+    background: var(--bg); border: 1px solid var(--accent-deep); border-radius: 999px; padding: .18rem .6rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+
+  .legend { max-width: 1200px; margin: 0 auto 3rem; padding: 0 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+  .lcard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem; font-size: .85rem; }
+  .lcard b { display: block; font-family: var(--font-display); margin-bottom: .3rem; }
+  .lcard { color: var(--muted); }
+  .lcard b { color: var(--text); }
+  footer { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: .7rem; padding: 1.5rem; }
+</style>
+</head>
+<body>
+
+<header class="mock-banner">
+  <span class="eyebrow">Proposal · mock4 · interactive — not implemented</span>
+  <h1>Roadmap as a draggable trail canvas</h1>
+  <p class="lede">The old roadmap drew each waypoint's line as a fixed stub — when cards wrapped to a second row the stubs pointed at nothing and the trail visually broke. Here the trail is <b>one continuous line drawn marker-to-marker, wherever the cards are</b>: solid behind you, dashed ahead, azure = you are here.</p>
+  <p class="try">▶ TRY IT: grab any card and drag it around — the trail follows. This is the actual proposed behavior.</p>
+</header>
+
+<div class="wrap">
+  <div class="meta-line">1 of 4 waypoints reached · next: <b>Grow launch waitlist to 500</b></div>
+  <div id="canvas">
+    <svg id="wires"></svg>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="lcard"><b>Default layout, then freedom</b>New goals appear in a tidy staggered flow (no dead zones). Drag any card anywhere; its waypoint marker rides on the card's top edge, and every line re-draws live.</div>
+  <div class="lcard"><b>Positions are saved</b>Where you drop a card is remembered on the goal itself, so the layout is shared — everyone who opens the roadmap sees the same map. "Reset layout" puts everything back in the default flow.</div>
+  <div class="lcard"><b>Trail order is still goal order</b>Dragging changes geography, not sequence — the line always visits goals in their existing order (your earlier ruling: no auto-resorting). Solid segments = traveled, dashed = ahead.</div>
+  <div class="lcard"><b>On phones</b>No free-drag canvas — the roadmap renders as a clean vertical trail (marker, card, marker, card), which already works well at that size.</div>
+</div>
+
+<footer>sofos · design mock · docs/design/mock4-roadmap-canvas.html · 2026-08</footer>
+
+<script>
+const GOALS = [
+  { id: "g1", title: "Ship the v2 site", desc: "Demo goal.", done: true },
+  { id: "g2", title: "Grow launch waitlist to 500", desc: "Demo goal.", done: false },
+  { id: "g3", title: "First 10 paying customers", desc: "Demo goal.", done: false },
+  { id: "g4", title: "Hire a designer", desc: "Demo goal.", done: false },
+];
+const canvas = document.getElementById("canvas");
+const wires = document.getElementById("wires");
+const currentIdx = GOALS.findIndex(g => !g.done);
+
+// default layout: staggered flow, two per "column pair", no dead zones
+function defaultPos(i) {
+  const col = Math.floor(i / 2), row = i % 2;
+  return { x: 40 + col * 330 + (row ? 60 : 0), y: 60 + row * 290 };
+}
+
+GOALS.forEach((g, i) => {
+  const el = document.createElement("div");
+  el.className = "gcard" + (g.done ? " done" : "") + (i === currentIdx ? " current" : "");
+  el.id = g.id;
+  const p = defaultPos(i);
+  el.style.left = p.x + "px"; el.style.top = p.y + "px";
+  el.innerHTML = `<div class="tools"><span title="drag">⠿</span><span title="edit">✎</span><span title="delete">×</span></div>
+    <h3>${g.title}</h3><p class="desc">${g.desc}</p>
+    <div class="tasksline">no tasks yet <a href="#" onclick="return false">+ Task</a></div>
+    <select class="assign"><option>Assign task…</option></select>`;
+  canvas.appendChild(el);
+
+  const marker = document.createElement("div");
+  marker.className = "marker" + (g.done ? " done" : "") + (i === currentIdx ? " current" : "");
+  marker.id = g.id + "-m";
+  canvas.appendChild(marker);
+  if (i === currentIdx) {
+    const label = document.createElement("div");
+    label.className = "youarehere"; label.id = g.id + "-l"; label.textContent = "YOU ARE HERE";
+    canvas.appendChild(label);
+  }
+});
+
+function markerPoint(g) {
+  const el = document.getElementById(g.id);
+  return { x: el.offsetLeft + 34, y: el.offsetTop };  // marker rides the card's top edge, near the left corner
+}
+function draw() {
+  GOALS.forEach((g, i) => {
+    const p = markerPoint(g);
+    const m = document.getElementById(g.id + "-m");
+    m.style.left = p.x + "px"; m.style.top = p.y + "px";
+    const l = document.getElementById(g.id + "-l");
+    if (l) { l.style.left = p.x + "px"; l.style.top = (p.y - 22) + "px"; }
+  });
+  wires.innerHTML = GOALS.slice(0, -1).map((g, i) => {
+    const a = markerPoint(g), b = markerPoint(GOALS[i + 1]);
+    const traveled = g.done;
+    const mx = (a.x + b.x) / 2;
+    const d = `M ${a.x} ${a.y} C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x} ${b.y}`;
+    return `<path d="${d}" fill="none" stroke="${traveled ? "var(--accent-deep)" : "#3A4C6B"}"
+      stroke-width="3" ${traveled ? "" : 'stroke-dasharray="7 7"'} stroke-linecap="round"/>`;
+  }).join("");
+}
+
+let drag = null;
+canvas.addEventListener("pointerdown", (e) => {
+  const card = e.target.closest(".gcard");
+  if (!card || e.target.closest("select, a, .tools span")) return;
+  drag = { card, dx: e.clientX - card.offsetLeft, dy: e.clientY - card.offsetTop };
+  card.classList.add("dragging");
+  card.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  const x = Math.min(Math.max(e.clientX - drag.dx, 8), canvas.clientWidth - drag.card.offsetWidth - 8);
+  const y = Math.min(Math.max(e.clientY - drag.dy, 26), canvas.clientHeight - drag.card.offsetHeight - 8);
+  drag.card.style.left = x + "px"; drag.card.style.top = y + "px";
+  draw();
+});
+["pointerup", "pointercancel"].forEach(ev => canvas.addEventListener(ev, () => {
+  if (drag) { drag.card.classList.remove("dragging"); drag = null; }
+}));
+draw();
+</script>
+</body>
+</html>

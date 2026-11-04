@@ -1,0 +1,81 @@
+name: Tests
+
+# Branch pushes only — tag pushes are covered by release.yml's own test job.
+on:
+  push:
+    branches: ["**"]
+
+# All workflows in this repository share one self-hosted Docker daemon and
+# fixed host ports/container names. Queue them instead of allowing one run's
+# defensive cleanup to remove another run's containers.
+concurrency:
+  group: sofos-shared-runner-host-resources
+  cancel-in-progress: false
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start throwaway mongo
+        run: |
+          # Recover from a previous interrupted job on the persistent runner.
+          docker rm -fv sofos-ci-test-mongo 2>/dev/null || true
+          docker run -d --name sofos-ci-test-mongo -p 28017:27017 mongo:7.0
+
+      - name: Install backend deps
+        working-directory: project/backend
+        run: npm ci
+
+      - name: Seed, boot server, run Sofos API suite
+        working-directory: project/backend
+        env:
+          MONGODB_URI: mongodb://localhost:28017/sofos-ci-test
+          JWT_SECRET: ci-only-secret-not-production-use
+          PORT: 3301
+          SCAN_ENABLED: "false"
+        run: |
+          npm run seed
+          node server.js > server.log 2>&1 &
+
+          up=0
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3301/api/health > /dev/null; then
+              up=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$up" -ne 1 ]; then
+            echo "server never came up after 30s, server log follows:"
+            cat server.log
+            exit 1
+          fi
+
+          API_URL=http://localhost:3301/api npm run test:api
+
+      - name: Run legacy-data migration suite
+        working-directory: project/backend
+        env:
+          MONGODB_URI: mongodb://localhost:28017/sofos-ci-migration-test
+        run: npm run test:migration
+
+      - name: Remove throwaway mongo
+        if: always()
+        run: |
+          # -v also removes the image's anonymous volumes (mongo declares /data/db + /data/configdb)
+          docker rm -fv sofos-ci-test-mongo 2>/dev/null || true
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install frontend deps
+        working-directory: project/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: project/frontend
+        run: npm run build

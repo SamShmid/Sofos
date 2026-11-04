@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — mock2: ProjectPage recomposition (B2 / B6)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #003478; --navy-deep: #002A61; --navy-soft: #E9F0FB;
+    --accent: #0E9CD6; --accent-soft: #E1F2FA; --suggester-text: #0A6E97;
+    --bg: #F4F6FA; --surface: #FFFFFF; --panel: #EEF2F8;
+    --text: #16233A; --muted: #5C6670; --border: #DDE3ED;
+    --danger: #B42318; --danger-bg: #FBEAE9; --danger-border: #ECC8C5;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-pill: 999px; --radius-card: 12px;
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.06); --shadow-modal: 0 10px 30px rgba(0,0,0,0.2);
+
+    --tag-c0-bg:#E3F5F1; --tag-c0-border:#A8DED2; --tag-c0-text:#1B6F5F;
+    --tag-c1-bg:#EAF5E3; --tag-c1-border:#BEDFA6; --tag-c1-text:#3F6B23;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+  a { color: inherit; }
+
+  .mock-banner { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 1.25rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  .mock-title { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; margin: 0.3rem 0 0.5rem; letter-spacing: -0.01em; }
+  .mock-lede { color: var(--muted); max-width: 74ch; margin: 0; font-size: 0.92rem; }
+  .mock-lede b { color: var(--navy); }
+  .mock-lede code { font-family: var(--font-mono); font-size: 0.85em; background: var(--navy-soft); color: var(--navy); padding: 0.05rem 0.35rem; border-radius: var(--radius-sm); }
+
+  .mock-body { max-width: 1480px; margin: 0 auto; padding: 0 1.5rem 2rem; display: flex; gap: 1.75rem; align-items: flex-start; }
+  .mock-canvas { flex: 1 1 1200px; max-width: 1200px; min-width: 0; }
+  .legend { flex: none; width: 280px; position: sticky; top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1.1rem 1.2rem; }
+  .legend h2 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin: 0 0 0.9rem; }
+  .legend ol { list-style: none; margin: 0; padding: 0; }
+  .legend li { display: flex; gap: 0.6rem; margin-bottom: 0.9rem; font-size: 0.82rem; color: var(--text); }
+  .legend li:last-child { margin-bottom: 0; }
+  .legend b { display: block; font-weight: 600; margin-bottom: 0.1rem; }
+  .legend .b-code { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent); display: block; margin-bottom: 0.15rem; }
+  .legend-dot {
+    flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--navy); color: var(--navy);
+    font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; display: flex; align-items: center; justify-content: center;
+    background: var(--navy-soft);
+  }
+  .note-dot {
+    display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
+    border: 1.5px solid var(--accent); color: var(--accent); background: var(--accent-soft);
+    font-family: var(--font-mono); font-size: 0.64rem; font-weight: 600; margin-left: 0.4rem; vertical-align: middle;
+  }
+
+  .app-frame { border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface); }
+  .app-header { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 1.5rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .wordmark .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--navy); display: inline-block; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-right a { font-size: 0.85rem; color: var(--text); text-decoration: none; font-weight: 500; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; }
+
+  .app-body { display: flex; align-items: stretch; min-height: 760px; }
+
+  aside.app-side { width: 236px; flex: none; padding: 1.4rem 0.85rem; border-right: 1px solid var(--border); background: var(--surface); }
+  .side-label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 0.6rem; margin: 1.1rem 0 0.35rem; }
+  .side-label:first-child { margin-top: 0; }
+  .side-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; border-radius: var(--radius-lg); text-decoration: none; color: var(--text); font-size: 0.88rem; font-weight: 500; }
+  .side-row:hover { background: var(--navy-soft); }
+  .side-row.active { background: var(--navy); color: #fff; }
+  .side-row .mini { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); }
+  .side-row.active .mini { color: #CBD9EF; }
+  .side-add { color: var(--navy) !important; font-weight: 600; }
+  .side-trail { margin: 0.15rem 0 0.15rem 0.75rem; padding-left: 0.6rem; border-left: 2px solid var(--border); }
+  .side-trail .side-trail { margin-left: 0.75rem; }
+  .side-trail .side-row { font-size: 0.85rem; }
+
+  main.app-main { flex: 1; padding: 2rem 2.25rem 2.5rem; min-width: 0; }
+
+  .breadcrumbs { display: flex; flex-wrap: wrap; align-items: baseline; margin-bottom: 0.6rem; font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); }
+  .crumb { color: var(--muted); text-decoration: none; }
+  .crumb:hover { color: var(--navy); }
+  .crumb-sep { margin: 0 0.3rem; }
+  .crumb-current { color: var(--muted); }
+
+  .page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  h1 { font-family: var(--font-display); font-size: 1.95rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+  .head-actions { display: flex; gap: 0.5rem; }
+  .btn { font-weight: 600; font-size: 0.82rem; border-radius: var(--radius-lg); padding: 0.4rem 0.8rem; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--navy); font-family: var(--font-body); }
+  .btn:hover { background: var(--navy-soft); }
+
+  .chip {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.18rem 0.5rem; border-radius: var(--radius-pill); border: 1px solid var(--border);
+    color: var(--muted); background: var(--surface); display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .chip.role-writer { border-color: var(--navy); color: var(--navy); }
+  .chip.op { border-color: var(--accent); color: var(--accent); }
+  .chip.status-progress { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .chip.tag { text-transform: none; letter-spacing: 0.02em; }
+  .chip.tag.c0 { background: var(--tag-c0-bg); border-color: var(--tag-c0-border); color: var(--tag-c0-text); }
+  .chip.tag.c1 { background: var(--tag-c1-bg); border-color: var(--tag-c1-border); color: var(--tag-c1-text); }
+
+  .id-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.5rem 0 0.6rem; }
+  .shared-meta { color: var(--muted); font-size: 0.82rem; margin: 0 0 0.4rem; }
+  /* B2: notes/descriptions no longer float in unbounded whitespace */
+  .page-desc { color: var(--muted); margin: 0 0 0.3rem; max-width: 62ch; font-size: 0.92rem; }
+  .desc-wrap { position: relative; margin-bottom: 1.5rem; }
+
+  .views-row {
+    display: flex; align-items: center; gap: 0; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 0.15rem 0.4rem; margin-bottom: 1.8rem;
+  }
+  .views-caption { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 0.7rem; }
+  .views-link { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text); font-weight: 600; font-size: 0.88rem; padding: 0.7rem 0.85rem; border-radius: var(--radius-lg); }
+  .views-link:hover { background: var(--navy-soft); }
+  .views-link .mini-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); font-weight: 400; }
+  .views-sep { width: 1px; align-self: stretch; margin: 0.6rem 0; background: var(--border); }
+  .views-row .note-dot { margin-left: auto; margin-right: 0.4rem; }
+  .toggle-chip {
+    font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.04em; padding: 0.12rem 0.4rem;
+    border-radius: var(--radius-pill); border: 1px solid var(--accent); color: var(--accent); background: var(--accent-soft);
+  }
+
+  .section-label {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--navy); font-weight: 500; margin: 2rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-label::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+
+  .task-list { list-style: none; margin: 0 0 0.4rem; padding: 0; }
+  .task-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.1rem; font-size: 0.9rem; }
+  .task-item input { accent-color: var(--navy); }
+  .task-item.done { color: var(--muted); text-decoration: line-through; }
+  .add-inline { display: inline-block; margin-top: 0.3rem; color: var(--navy); font-weight: 600; font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.3rem 0.5rem; border-radius: var(--radius-lg); font-family: var(--font-body); }
+  .add-inline:hover { background: var(--navy-soft); }
+
+  .row-list { list-style: none; margin: 0; padding: 0; }
+  .row-list li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-lg); }
+  .row-list li:hover { background: var(--surface); }
+  .row-list a { color: var(--text); font-weight: 500; font-size: 0.87rem; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; flex: 1; }
+  .row-list .fname { color: var(--text); font-weight: 500; font-size: 0.87rem; flex: 1; }
+  .row-list .meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .glyph { color: var(--navy); font-size: 0.85rem; width: 1.1rem; text-align: center; }
+
+  .panel-band { margin-top: 2.2rem; background: var(--panel); border-radius: var(--radius-card); padding: 0.3rem 1.4rem 1.4rem; }
+  .panel-section { padding-top: 1.1rem; border-top: 1px solid var(--border); }
+  .panel-section:first-child { border-top: none; }
+  .panel-section .section-label { color: var(--navy); margin: 1rem 0 0.7rem; }
+  .panel-section .section-label::after { border-top-color: var(--border); }
+  .fourcol { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.6rem 2rem; }
+
+  .sugg { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius-lg); padding: 0.7rem 0.85rem; display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+  .sugg .what { flex: 1; font-size: 0.84rem; min-width: 10rem; }
+  .sugg .who { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .btn-approve { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn-reject { color: var(--muted); }
+
+  /* ---- what-changed callout ---- */
+  .changed {
+    max-width: 1200px; margin: 0 auto 2.5rem; background: var(--surface); border: 1px solid var(--border);
+    border-left: 4px solid var(--navy); border-radius: var(--radius-card); padding: 1.1rem 1.4rem;
+  }
+  .changed h2 { font-family: var(--font-display); font-size: 1.05rem; margin: 0 0 0.6rem; }
+  .changed ul { margin: 0; padding-left: 1.2rem; }
+  .changed li { font-size: 0.86rem; color: var(--text); margin-bottom: 0.35rem; }
+  .changed li:last-child { margin-bottom: 0; }
+  .changed li b { color: var(--navy); }
+
+  /* ---- framed Move modal inset ---- */
+  .modal-inset-wrap { max-width: 1200px; margin: 0 auto 3rem; }
+  .modal-inset-label { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin-bottom: 0.7rem; }
+  .modal-frame { background: var(--bg); border: 1px dashed var(--border); border-radius: var(--radius-card); padding: 2.5rem; display: flex; justify-content: center; }
+  .modal {
+    width: 420px; max-width: 100%; background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--shadow-modal);
+    overflow: hidden;
+  }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .modal-head h3 { margin: 0; font-family: var(--font-display); font-size: 1.05rem; }
+  .modal-head .x { color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+  .modal-body { padding: 0.6rem 1.25rem 1.25rem; }
+  .tree-mock { list-style: none; margin: 0 0 1rem; padding: 0; }
+  .tree-mock li { display: flex; align-items: center; gap: 0.5rem; padding: 0.42rem 0.5rem; border-radius: var(--radius-lg); font-size: 0.87rem; cursor: pointer; }
+  .tree-mock li:hover { background: var(--navy-soft); }
+  .tree-mock li.here { background: var(--accent-soft); color: var(--suggester-text); font-weight: 600; cursor: default; }
+  .tree-mock .tglyph { width: 1.1rem; text-align: center; flex: none; color: var(--navy); }
+  .tree-mock li.here .tglyph { color: var(--suggester-text); }
+  .tree-mock em { font-family: var(--font-mono); font-style: normal; font-size: 0.68rem; color: var(--muted); margin-left: auto; }
+  .move-preview {
+    font-size: 0.84rem; color: var(--text); background: var(--navy-soft); border-radius: var(--radius-lg);
+    padding: 0.6rem 0.8rem;
+  }
+  .move-preview b { color: var(--navy); }
+
+  footer.mock-foot { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; padding: 2rem; }
+
+  @media (max-width: 1080px) {
+    .mock-body { flex-direction: column; }
+    .legend { position: static; width: 100%; }
+    .fourcol { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="mock-banner">
+  <span class="eyebrow">Proposal · mock2 · not implemented</span>
+  <h1 class="mock-title">ProjectPage recomposition</h1>
+  <p class="mock-lede">
+    Visualizes <b>B2</b> (two-tier composition, replacing the split aside/main stack), <b>B3</b> (breadcrumbs) and <b>B6</b>
+    (board rolls up sub-projects) on <code>Marketing Site</code>, a project inside the <code>mock2-workspace.html</code> demo data.
+    A framed inset below shows the proposed Move-modal treatment.
+  </p>
+</header>
+
+<div class="mock-body">
+  <div class="mock-canvas">
+    <div class="app-frame">
+      <header class="app-header">
+        <a class="wordmark" href="#"><span class="wp"></span>Sofos</a>
+        <div class="header-right"><a href="#">Settings</a><span class="avatar">AD</span></div>
+      </header>
+      <div class="app-body">
+        <aside class="app-side">
+          <div class="side-label">Yours</div>
+          <a class="side-row" href="#">Home <span class="mini">2</span></a>
+          <a class="side-row" href="#">Work <span class="mini">4</span></a>
+          <div class="side-trail">
+            <a class="side-row" href="#">Product Launch <span class="mini">5</span></a>
+            <div class="side-trail">
+              <a class="side-row active" href="#">Marketing Site</a>
+            </div>
+          </div>
+          <a class="side-row side-add" href="#">+ Workspace</a>
+          <div class="side-label">Shared with you</div>
+          <a class="side-row" href="#">Dana's Studio <span class="mini">reader</span></a>
+          <div class="side-label">System</div>
+          <a class="side-row" href="#">Trash <span class="mini">3</span></a>
+        </aside>
+
+        <main class="app-main">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a class="crumb" href="#">Home</a><span class="crumb-sep">/</span>
+            <a class="crumb" href="#">Work</a><span class="crumb-sep">/</span>
+            <a class="crumb" href="#">Product Launch</a><span class="crumb-sep">/</span>
+            <span class="crumb-current">Marketing Site</span>
+            <span class="note-dot">1</span>
+          </nav>
+
+          <div class="page-head">
+            <h1>Marketing Site</h1>
+            <div class="head-actions">
+              <button class="btn">History</button>
+              <button class="btn">Edit</button>
+              <button class="btn">Move</button>
+            </div>
+          </div>
+          <div class="id-tags">
+            <span class="chip tag c0">web</span>
+            <span class="chip tag c1">launch</span>
+          </div>
+          <p class="shared-meta">in Product Launch · your access: <span class="chip role-writer">writer</span></p>
+
+          <div class="desc-wrap">
+            <p class="page-desc">Public site copy, pricing page, and the countdown banner for the v2 launch. Copy freeze is July 30 — anything landing after that slips to the v2.1 patch notes instead.</p>
+            <span class="note-dot">2</span>
+          </div>
+
+          <div class="section-label">Tasks · 6<span class="note-dot">3</span></div>
+          <ul class="task-list">
+            <li class="task-item"><input type="checkbox"> <span>Write launch banner copy</span> <span class="chip status-progress">in progress</span></li>
+            <li class="task-item"><input type="checkbox"> <span>Finalize pricing page layout</span></li>
+            <li class="task-item"><input type="checkbox"> <span>Draft countdown banner microcopy</span></li>
+            <li class="task-item"><input type="checkbox"> <span>Get legal sign-off on claims</span></li>
+            <li class="task-item done"><input type="checkbox" checked> <span>Set up staging preview</span></li>
+            <li class="task-item done"><input type="checkbox" checked> <span>Confirm domain + SSL</span></li>
+          </ul>
+          <button class="add-inline">+ Task</button>
+
+          <div class="views-row">
+            <span class="views-caption">Views</span>
+            <a class="views-link" href="#">Roadmap <span class="mini-label">1 of 3</span></a>
+            <span class="views-sep"></span>
+            <a class="views-link" href="#">Board <span class="toggle-chip">✓ includes sub-projects</span></a>
+            <span class="note-dot">4</span>
+          </div>
+
+          <div class="section-label">Sub-projects · 2</div>
+          <ul class="row-list">
+            <li><span class="glyph">▸</span><a href="#">Landing Page Variant B</a></li>
+            <li><span class="glyph">▸</span><a href="#">Countdown Widget</a></li>
+          </ul>
+          <button class="add-inline">+ Sub-project</button>
+
+          <div class="panel-band">
+            <div class="panel-section">
+              <div class="section-label">Needs your review · 1<span class="note-dot">5</span></div>
+              <div class="sugg">
+                <span class="chip op">create</span>
+                <span class="what">seedbot proposes a task: <b>"Compress hero images before launch"</b></span>
+                <span class="who">2m ago</span>
+                <button class="btn btn-approve">Approve</button>
+                <button class="btn btn-reject">Reject</button>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="fourcol">
+                <div>
+                  <div class="section-label">Notes · 2</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">▤</span><a href="#">Positioning &amp; messaging</a><span class="meta">upd. Jul 21</span></li>
+                    <li><span class="glyph">▤</span><a href="#">Copy freeze checklist</a><span class="meta">upd. Jul 19</span></li>
+                  </ul>
+                  <button class="add-inline">+ Note</button>
+                </div>
+                <div>
+                  <div class="section-label">Links · 2</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">↗</span><a href="#">Launch runbook</a><span class="meta">Jul 19</span></li>
+                    <li><span class="glyph">↗</span><a href="#">Brand asset library</a><span class="meta">Jul 20</span></li>
+                  </ul>
+                  <button class="add-inline">+ Link</button>
+                </div>
+                <div>
+                  <div class="section-label">Files · 1</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">⬒</span><span class="fname">launch-banner-v3.png</span><span class="meta">1.4 MB</span></li>
+                  </ul>
+                  <button class="add-inline">+ File</button>
+                </div>
+                <div>
+                  <div class="section-label">Suggestions · 1</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">✎</span><span class="fname">edit: pricing page description</span><span class="meta">pending</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <aside class="legend">
+    <h2>What this depicts</h2>
+    <ol>
+      <li><span class="legend-dot">1</span><span><span class="b-code">B3</span><b>Real breadcrumbs</b>Full Home → Work → Product Launch → Marketing Site trail instead of one hand-rolled back link.</span></li>
+      <li><span class="legend-dot">2</span><span><span class="b-code">B2</span><b>Max-width reading surface</b>Description is capped at ~62ch instead of stretching edge-to-edge at desktop widths.</span></li>
+      <li><span class="legend-dot">3</span><span><span class="b-code">B1</span><b>Section header + count idiom</b>"Tasks · 6" replaces the plain <code>&lt;h3&gt;Tasks&lt;/h3&gt;</code> — every sibling section now carries the same treatment and a count.</span></li>
+      <li><span class="legend-dot">4</span><span><span class="b-code">B1 / B2 / B6</span><b>Compact views row</b>Roadmap + Board become one row; the Board link carries the "includes sub-projects" state B6 proposes adding.</span></li>
+      <li><span class="legend-dot">5</span><span><span class="b-code">B1 / B2</span><b>Quiet secondary panel band</b>Notes preview, Links, Files and Suggestions share one muted panel instead of four independent full-weight sections.</span></li>
+    </ol>
+  </aside>
+</div>
+
+<div class="changed">
+  <h2>What changed here, vs the shipped ProjectPage</h2>
+  <ul>
+    <li>The split <b>aside + main</b> layout (task list first, identity second) becomes one column, identity-first — on mobile today the task wall renders <em>above</em> the title (bug A4); this composition can't regress that way.</li>
+    <li><b>Tasks / Sub-projects</b> gain the section-label + count idiom; today Tasks/Notes are plain <code>h3</code>/<code>h4</code> with no counts while Sub-projects already has one — now every section matches.</li>
+    <li><b>Links / Files / Suggestions</b> (+ a new Notes preview) move into one quiet panel band instead of three independently-weighted full sections.</li>
+    <li>The <b>in-progress chip</b> renders the shipped task <code>status</code> field (todo / in progress / done, Phase 26) through the unified chip system — only <b>due dates and priorities</b> remain the open product decision B6 flags.</li>
+    <li><b>Move</b> gains the icon + indentation + destination-preview treatment shown in the inset below (today: a flat unindented list, no preview).</li>
+  </ul>
+</div>
+
+<div class="modal-inset-wrap">
+  <div class="modal-inset-label">Framed inset — proposed Move modal treatment (B2)</div>
+  <div class="modal-frame">
+    <div class="modal">
+      <div class="modal-head"><h3>Move project</h3><span class="x">×</span></div>
+      <div class="modal-body">
+        <ul class="tree-mock">
+          <li><span class="tglyph">⌂</span> Home</li>
+          <li style="padding-left:1.75rem"><span class="tglyph">▸</span> Ops</li>
+          <li class="here" style="padding-left:3rem"><span class="tglyph">●</span> Website <em>you are here</em></li>
+          <li style="padding-left:1.75rem"><span class="tglyph">▸</span> Engineering</li>
+          <li style="padding-left:3rem"><span class="tglyph">▸</span> API</li>
+          <li style="padding-left:3rem"><span class="tglyph">▸</span> Infra</li>
+        </ul>
+        <div class="move-preview">Will live under: <b>Home / Ops</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="mock-foot">sofos · design mock · docs/design/mock2-project.html</footer>
+</body>
+</html>

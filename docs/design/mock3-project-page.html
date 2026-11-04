@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — mock3: Project page, post-verification rulings (2026-08)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #003478; --navy-deep: #002A61; --navy-soft: #E9F0FB;
+    --accent: #0E9CD6; --accent-soft: #E1F2FA; --suggester-text: #0A6E97;
+    --bg: #F4F6FA; --surface: #FFFFFF; --panel: #EEF2F8;
+    --text: #16233A; --muted: #5C6670; --border: #DDE3ED;
+    --danger: #B42318; --danger-bg: #FBEAE9;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    --radius-sm: 4px; --radius-lg: 8px; --radius-pill: 999px; --radius-card: 12px;
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.06);
+    --tag-c0-bg:#E3F5F1; --tag-c0-border:#A8DED2; --tag-c0-text:#1B6F5F;
+    --tag-c1-bg:#EAF5E3; --tag-c1-border:#BEDFA6; --tag-c1-text:#3F6B23;
+    --tag-c2-bg:#FDEFE3; --tag-c2-border:#F2CBA4; --tag-c2-text:#8A5A1E;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+  a { color: inherit; }
+
+  .mock-banner { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 1.25rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  .mock-title { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; margin: 0.3rem 0 0.5rem; }
+  .mock-lede { color: var(--muted); max-width: 74ch; margin: 0; font-size: 0.92rem; }
+  .mock-lede b { color: var(--navy); }
+
+  .mock-body { max-width: 1560px; margin: 0 auto; padding: 0 1.5rem 2rem; display: flex; gap: 1.75rem; align-items: flex-start; }
+  .mock-canvas { flex: 1 1 1200px; max-width: 1200px; min-width: 0; }
+  .legend { flex: none; width: 300px; position: sticky; top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1.1rem 1.2rem; }
+  .legend h2 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin: 0 0 0.9rem; }
+  .legend ol { list-style: none; margin: 0; padding: 0; }
+  .legend li { display: flex; gap: 0.6rem; margin-bottom: 0.95rem; font-size: 0.82rem; }
+  .legend b { display: block; font-weight: 600; margin-bottom: 0.1rem; }
+  .legend-dot { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--navy); color: var(--navy); font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; display: flex; align-items: center; justify-content: center; background: var(--navy-soft); }
+  .note-dot { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); background: var(--accent-soft); font-family: var(--font-mono); font-size: 0.64rem; font-weight: 600; margin-left: 0.4rem; vertical-align: middle; }
+
+  .app-frame { border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface); }
+  .app-header { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 1.5rem; border-bottom: 1px solid var(--border); }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .wordmark .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--navy); display: inline-block; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-right a { font-size: 0.85rem; text-decoration: none; font-weight: 500; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; }
+
+  .app-body { display: flex; align-items: stretch; min-height: 820px; }
+  aside.app-side { width: 236px; flex: none; padding: 1.4rem 0.85rem; border-right: 1px solid var(--border); }
+  .side-label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 0.6rem; margin: 1.1rem 0 0.35rem; }
+  .side-label:first-child { margin-top: 0; }
+  .side-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; border-radius: var(--radius-lg); text-decoration: none; font-size: 0.88rem; font-weight: 500; }
+  .side-row:hover { background: var(--navy-soft); }
+  .side-row.active { background: var(--navy); color: #fff; }
+  .side-row .mini { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); }
+  .side-row.active .mini { color: #CBD9EF; }
+  .side-add { color: var(--navy) !important; font-weight: 600; }
+  .side-trail { margin: 0.15rem 0 0.15rem 0.75rem; padding-left: 0.6rem; border-left: 2px solid var(--border); }
+
+  main.app-main { flex: 1; padding: 2rem 2.5rem 2.5rem; min-width: 0; }
+  .breadcrumbs { display: flex; flex-wrap: wrap; align-items: baseline; margin-bottom: 0.6rem; font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); }
+  .crumb { text-decoration: none; }
+  .crumb:hover { color: var(--navy); }
+  .crumb-sep { margin: 0 0.3rem; }
+
+  .page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  h1 { font-family: var(--font-display); font-size: 1.95rem; font-weight: 700; margin: 0; }
+  .head-actions { display: flex; gap: 0.5rem; align-items: center; }
+  .btn { font-weight: 600; font-size: 0.82rem; border-radius: var(--radius-lg); padding: 0.4rem 0.8rem; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--navy); font-family: var(--font-body); }
+  .btn:hover { background: var(--navy-soft); }
+  .btn.danger { color: var(--danger); }
+  .btn.danger:hover { background: var(--danger-bg); }
+
+  .mode-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-pill); overflow: hidden; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; }
+  .mode-toggle span { padding: 0.28rem 0.7rem; cursor: pointer; color: var(--muted); }
+  .mode-toggle .on { background: var(--navy); color: #fff; }
+
+  .chip { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border-radius: var(--radius-pill); border: 1px solid var(--border); color: var(--muted); background: var(--surface); display: inline-flex; align-items: center; gap: 0.3rem; }
+  .chip.role-writer { border-color: var(--navy); color: var(--navy); }
+  .chip.op { border-color: var(--navy); color: var(--navy); background: var(--navy-soft); }
+  .chip.status-progress { border-color: var(--accent); color: var(--suggester-text); background: var(--accent-soft); }
+  .chip.due { border-color: var(--border); color: var(--muted); text-transform: none; }
+  .chip.due.overdue { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
+  .chip.prio-high { border-color: var(--navy); color: var(--navy); }
+  .chip.tag { text-transform: none; letter-spacing: 0.02em; }
+  .chip.tag.c0 { background: var(--tag-c0-bg); border-color: var(--tag-c0-border); color: var(--tag-c0-text); }
+  .chip.tag.c1 { background: var(--tag-c1-bg); border-color: var(--tag-c1-border); color: var(--tag-c1-text); }
+  .chip.tag.c2 { background: var(--tag-c2-bg); border-color: var(--tag-c2-border); color: var(--tag-c2-text); }
+
+  .id-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.5rem 0 0.6rem; }
+  .shared-meta { color: var(--muted); font-size: 0.82rem; margin: 0 0 0.4rem; }
+  .page-desc { color: var(--muted); margin: 0 0 1.5rem; max-width: 62ch; font-size: 0.92rem; }
+
+  .views-row { display: flex; align-items: center; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 0.15rem 0.4rem; margin-bottom: 1.8rem; }
+  .views-caption { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 0.7rem; }
+  .views-link { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; font-weight: 600; font-size: 0.88rem; padding: 0.7rem 0.85rem; border-radius: var(--radius-lg); }
+  .views-link:hover { background: var(--navy-soft); }
+  .views-link .mini-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); font-weight: 400; }
+  .views-sep { width: 1px; align-self: stretch; margin: 0.6rem 0; background: var(--border); }
+  .toggle-chip { font-family: var(--font-mono); font-size: 0.64rem; padding: 0.12rem 0.4rem; border-radius: var(--radius-pill); border: 1px solid var(--border); color: var(--muted); }
+
+  .section-label { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; margin: 2rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+  .section-label::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+
+  .task-list { list-style: none; margin: 0 0 0.4rem; padding: 0; }
+  .task-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.5rem; font-size: 0.9rem; border-radius: var(--radius-lg); }
+  .task-item:hover { background: var(--panel); }
+  .task-item input { accent-color: var(--navy); }
+  .task-item .t-title { flex: 1; min-width: 0; font-weight: 500; text-decoration: none; cursor: pointer; }
+  .task-item .t-title:hover { color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
+  .task-item.done { color: var(--muted); }
+  .task-item.done .t-title { text-decoration: line-through; cursor: pointer; }
+  .task-item .rowtools { display: flex; gap: 0.3rem; opacity: 0.9; }
+  .task-item .rowtools .btn { padding: 0.15rem 0.45rem; font-size: 0.72rem; }
+  .add-inline { display: inline-block; margin-top: 0.3rem; color: var(--navy); font-weight: 600; font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.3rem 0.5rem; border-radius: var(--radius-lg); font-family: var(--font-body); }
+  .add-inline:hover { background: var(--navy-soft); }
+
+  .row-list { list-style: none; margin: 0; padding: 0; }
+  .row-list li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-lg); }
+  .row-list li:hover { background: var(--surface); }
+  .row-list a { font-weight: 500; font-size: 0.87rem; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; flex: 1; }
+  .row-list .fname { font-weight: 500; font-size: 0.87rem; flex: 1; }
+  .row-list .meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .glyph { color: var(--navy); font-size: 0.85rem; width: 1.1rem; text-align: center; }
+
+  .panel-band { margin-top: 2.2rem; background: var(--panel); border-radius: var(--radius-card); padding: 0.3rem 1.4rem 1.4rem; }
+  .panel-section { padding-top: 1.1rem; border-top: 1px solid var(--border); }
+  .panel-section:first-child { border-top: none; }
+  .panel-section .section-label { margin: 1rem 0 0.7rem; }
+  .threecol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6rem 2rem; }
+
+  .sugg { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--navy); border-radius: var(--radius-lg); padding: 0.7rem 0.85rem; display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .sugg .what { flex: 1; font-size: 0.86rem; min-width: 16rem; }
+  .sugg .delta { font-size: 0.82rem; color: var(--muted); display: block; margin-top: 0.15rem; }
+  .sugg .delta b { color: var(--text); font-weight: 600; }
+  .sugg .who { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .btn-approve { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn-approve:hover { background: var(--navy-deep); }
+  .btn-reject { color: var(--muted); }
+
+  footer.mock-foot { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; padding: 2rem; }
+  @media (max-width: 1120px) {
+    .mock-body { flex-direction: column; }
+    .legend { position: static; width: 100%; }
+    .threecol { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="mock-banner">
+  <span class="eyebrow">Proposal · mock3 · not implemented · supersedes mock2-project.html</span>
+  <h1 class="mock-title">Project page — after the 2026-08 verification rulings</h1>
+  <p class="mock-lede">
+    The skinny left column is <b>gone</b> — everything lives on one full-width page, most important things first.
+    The numbered blue dots mark what's new; the panel on the right explains each one in plain words.
+    Sample data is fictional ("Marketing Site" project). Nothing here is built yet.
+  </p>
+</header>
+
+<div class="mock-body">
+  <div class="mock-canvas">
+    <div class="app-frame">
+      <header class="app-header">
+        <a class="wordmark" href="#"><span class="wp"></span>Sofos</a>
+        <div class="header-right"><a href="#">Settings</a><span class="avatar">AD</span></div>
+      </header>
+      <div class="app-body">
+        <aside class="app-side">
+          <div class="side-label">Yours</div>
+          <a class="side-row" href="#">Home <span class="mini">2</span></a>
+          <a class="side-row" href="#">Work <span class="mini">4</span></a>
+          <div class="side-trail">
+            <a class="side-row" href="#">Product Launch <span class="mini">5</span></a>
+            <div class="side-trail">
+              <a class="side-row active" href="#">Marketing Site</a>
+            </div>
+          </div>
+          <a class="side-row side-add" href="#">+ Workspace</a>
+          <div class="side-label">Shared with you</div>
+          <a class="side-row" href="#">Dana's account <span class="mini">▾ 24</span></a>
+          <div class="side-label">System</div>
+          <a class="side-row" href="#">Trash <span class="mini">3</span></a>
+        </aside>
+
+        <main class="app-main">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a class="crumb" href="#">Overview</a><span class="crumb-sep">/</span>
+            <a class="crumb" href="#">Work</a><span class="crumb-sep">/</span>
+            <a class="crumb" href="#">Product Launch</a><span class="crumb-sep">/</span>
+            <span>Marketing Site</span>
+          </nav>
+
+          <div class="page-head">
+            <h1>Marketing Site<span class="note-dot">1</span></h1>
+            <div class="head-actions">
+              <span class="mode-toggle" title="Writers can switch to suggesting"><span class="on">Editing</span><span>Suggesting</span></span><span class="note-dot">6</span>
+              <button class="btn">History</button>
+              <button class="btn">Edit</button>
+              <button class="btn">Move</button>
+              <button class="btn danger">Delete</button><span class="note-dot">7</span>
+            </div>
+          </div>
+          <div class="id-tags">
+            <span class="chip tag c0">web</span>
+            <span class="chip tag c1">launch</span>
+          </div>
+          <p class="shared-meta">in Product Launch · your access: <span class="chip role-writer">writer</span></p>
+          <p class="page-desc">Public site copy, pricing page, and the countdown banner for the v2 launch. Copy freeze is July 30 — anything landing after that slips to the v2.1 patch notes.</p>
+
+          <div class="views-row">
+            <span class="views-caption">Views</span>
+            <a class="views-link" href="#">List</a>
+            <span class="views-sep"></span>
+            <a class="views-link" href="#">Board <span class="toggle-chip">☑ include sub-projects</span></a>
+            <span class="views-sep"></span>
+            <a class="views-link" href="#">Roadmap <span class="mini-label">1 of 3</span></a>
+          </div>
+
+          <div class="section-label">Tasks · 6<span class="note-dot">2</span></div>
+          <ul class="task-list">
+            <li class="task-item">
+              <input type="checkbox">
+              <a class="t-title">Write launch banner copy — full titles finally have room to breathe</a>
+              <span class="chip tag c2">copy</span>
+              <span class="chip status-progress">in progress</span>
+              <span class="chip due overdue">due Aug 10</span>
+              <span class="rowtools"><button class="btn">✎</button><button class="btn">×</button></span>
+            </li>
+            <li class="task-item">
+              <input type="checkbox">
+              <a class="t-title">Finalize pricing page layout</a>
+              <span class="chip prio-high">high</span>
+              <span class="chip due">due Aug 22</span>
+              <span class="rowtools"><button class="btn">✎</button><button class="btn">×</button></span>
+            </li>
+            <li class="task-item">
+              <input type="checkbox">
+              <a class="t-title">Draft countdown banner microcopy</a>
+              <span class="rowtools"><button class="btn">✎</button><button class="btn">×</button></span>
+            </li>
+            <li class="task-item">
+              <input type="checkbox">
+              <a class="t-title">Get legal sign-off on claims</a>
+              <span class="chip due">due Sep 2</span>
+              <span class="rowtools"><button class="btn">✎</button><button class="btn">×</button></span>
+            </li>
+            <li class="task-item done">
+              <input type="checkbox" checked>
+              <a class="t-title">Set up staging preview</a>
+              <span class="rowtools"><button class="btn">✎</button><button class="btn">×</button></span>
+            </li>
+            <li class="task-item done">
+              <input type="checkbox" checked>
+              <a class="t-title">Confirm domain + SSL</a>
+              <span class="rowtools"><button class="btn">✎</button><button class="btn">×</button></span>
+            </li>
+          </ul>
+          <button class="add-inline">+ Task</button>
+
+          <div class="section-label">Sub-projects · 2</div>
+          <ul class="row-list">
+            <li><span class="glyph">▸</span><a href="#">Landing Page Variant B</a></li>
+            <li><span class="glyph">▸</span><a href="#">Countdown Widget</a></li>
+          </ul>
+          <button class="add-inline">+ Sub-project</button>
+
+          <div class="panel-band">
+            <div class="panel-section">
+              <div class="section-label">Needs your review · 2<span class="note-dot">4</span></div>
+              <div class="sugg">
+                <span class="chip op">new task</span><span class="note-dot">5</span>
+                <span class="what">seedbot proposes a new task: <b>"Compress hero images before launch"</b></span>
+                <span class="who">2m ago</span>
+                <button class="btn btn-approve">Approve</button>
+                <button class="btn btn-reject">Reject</button>
+              </div>
+              <div class="sugg">
+                <span class="chip op">change</span>
+                <span class="what">Dana proposes changes to task <b>"Finalize pricing page layout"</b>
+                  <span class="delta">due date → <b>Aug 20</b> · priority → <b>high</b></span>
+                </span>
+                <span class="who">1h ago</span>
+                <button class="btn btn-approve">Approve</button>
+                <button class="btn btn-reject">Reject</button>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="threecol">
+                <div>
+                  <div class="section-label">Notes · 2</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">▤</span><a href="#">Positioning &amp; messaging</a><span class="meta">upd. Aug 2</span></li>
+                    <li><span class="glyph">▤</span><a href="#">Copy freeze checklist</a><span class="meta">upd. Jul 30</span></li>
+                  </ul>
+                  <button class="add-inline">+ Note</button>
+                </div>
+                <div>
+                  <div class="section-label">Links · 2</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">↗</span><a href="#">Launch runbook</a><span class="meta">Jul 19</span></li>
+                    <li><span class="glyph">↗</span><a href="#">Brand asset library</a><span class="meta">Jul 20</span></li>
+                  </ul>
+                  <button class="add-inline">+ Link</button>
+                </div>
+                <div>
+                  <div class="section-label">Files · 1</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">⬒</span><span class="fname">launch-banner-v3.png</span><span class="meta">1.4 MB</span></li>
+                  </ul>
+                  <button class="add-inline">+ File</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <aside class="legend">
+    <h2>What's new, in plain words</h2>
+    <ol>
+      <li><span class="legend-dot">1</span><span><b>One page, no skinny column</b>The old page squeezed everything into a phone-width strip on the left and left the rest empty. Now tasks, sub-projects, notes, links and files all share the full width, most important first.</span></li>
+      <li><span class="legend-dot">2</span><span><b>Task rows you can actually use</b>Full titles (no more "Redesign the landing p…"), and the title itself is clickable — it opens the task. Due dates, priority and the task's own tags sit right on the row.</span></li>
+      <li><span class="legend-dot">3</span><span><b>Everything renamable the same way</b>The Edit button here opens name + description — and workspaces get the exact same button (today they can't be renamed at all).</span></li>
+      <li><span class="legend-dot">4</span><span><b>Suggestions in plain words</b>Cards now say who proposes what, and for changes: only what would actually change ("due date → Aug 20"), not a dump of every internal field.</span></li>
+      <li><span class="legend-dot">5</span><span><b>Kind labels in navy</b>The "new task" / "change" labels are navy now — the bright sky-blue stays reserved for "you are here" on roadmaps, per the design rule.</span></li>
+      <li><span class="legend-dot">6</span><span><b>Writing / Suggesting switch</b>Your new ruling: people with edit power can flip to "Suggesting" so their edits become suggestions instead of landing directly — and they can approve their own.</span></li>
+      <li><span class="legend-dot">7</span><span><b>Delete lives here now</b>Projects become deletable from their own page (today: only from the parent workspace's card). Deleting sends you to whatever contains this project, with a "moved to Trash" note.</span></li>
+    </ol>
+  </aside>
+</div>
+
+<footer class="mock-foot">sofos · design mock · docs/design/mock3-project-page.html · 2026-08</footer>
+</body>
+</html>

@@ -1,0 +1,204 @@
+name: Docker smoke
+
+# Path-filtered: only fires on pushes that touch image-relevant files. A
+# broken build/runtime here means the release pipeline would ship a broken
+# image — release.yml runs this same gate sequence inline before every
+# registry push (see the comment there); this workflow is the twin that
+# also covers plain branch pushes touching these paths.
+on:
+  push:
+    paths:
+      - "Dockerfile"
+      - "docker/**"
+      - "compose.deploy.yml"
+      - "docker-compose.yml"
+      - ".dockerignore"
+
+# All workflows in this repository share one self-hosted Docker daemon and
+# fixed host ports/container names. Queue them instead of allowing one run's
+# defensive cleanup to remove another run's containers.
+concurrency:
+  group: sofos-shared-runner-host-resources
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    # The Dockerfile bakes freshclam's signature DB at build time (C4 adds a
+    # 3x/30s retry on mirror hiccups) — the build step alone can take several
+    # minutes, on top of the boot/scanner-warmup waits below.
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t sofos-smoke:ci .
+
+      - name: Run container with throwaway volumes
+        run: |
+          # Defensive: a prior run that died before teardown could have left
+          # these behind; never build a smoke run on top of stale state.
+          docker rm -fv sofos-smoke 2>/dev/null || true
+          docker volume rm sofos-smoke-data sofos-smoke-uploads sofos-smoke-backups 2>/dev/null || true
+
+          docker volume create sofos-smoke-data
+          docker volume create sofos-smoke-uploads
+          docker volume create sofos-smoke-backups
+
+          # SCAN_ENABLED is deliberately left unset here — the image bakes it
+          # on (Dockerfile ENV) and this smoke exists to prove that default
+          # actually works end to end.
+          docker run -d --name sofos-smoke \
+            -p 3400:3000 \
+            -v sofos-smoke-data:/data/db \
+            -v sofos-smoke-uploads:/app/uploads \
+            -v sofos-smoke-backups:/app/backups \
+            -e JWT_SECRET=ci-only-docker-smoke-secret-not-production-use \
+            sofos-smoke:ci
+
+      - name: Run smoke gates
+        run: |
+          set -e
+          BASE=http://localhost:3400/api
+          ROOT=http://localhost:3400
+
+          # Small helper: pull a dot-path field out of the last response body
+          # (curl -o'd to /tmp/resp.json) via node, which is already present
+          # on this runner (test.yml/release.yml already run `node server.js`
+          # directly with no setup-node step).
+          jget() { node -pe "JSON.parse(require('fs').readFileSync('/tmp/resp.json','utf8'))$1"; }
+
+          echo "== Waiting for /api/health (mongod boot, up to 120s) =="
+          up=0
+          for i in $(seq 1 120); do
+            if curl -sf "$BASE/health" -o /dev/null; then up=1; break; fi
+            sleep 1
+          done
+          if [ "$up" -ne 1 ]; then
+            echo "FAIL: container never became healthy after 120s; docker logs follow:"
+            docker logs sofos-smoke
+            exit 1
+          fi
+          echo "PASS: container healthy"
+
+          echo "== Registering smoke user + workspace/project =="
+          curl -s -X POST "$BASE/auth/register" -H "Content-Type: application/json" \
+            -d '{"username":"smoketest","password":"smoketestpass1"}' -o /tmp/resp.json
+          TOKEN=$(jget .token)
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "undefined" ]; then
+            echo "FAIL: register did not return a token"; cat /tmp/resp.json; exit 1
+          fi
+
+          curl -s -X POST "$BASE/workspaces" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d '{"name":"Smoke WS"}' -o /tmp/resp.json
+          WS_ID=$(jget .data._id)
+
+          curl -s -X POST "$BASE/projects" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d "{\"name\":\"Smoke Project\",\"workspace\":\"$WS_ID\"}" -o /tmp/resp.json
+          PROJ_ID=$(jget .data._id)
+          echo "PASS: register + workspace + project set up"
+
+          # A real 1x1 PNG (68 bytes, same fixture the live suite uses) —
+          # magic-byte detection needs real structure, not a bare signature.
+          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=" | base64 -d > /tmp/smoke.png
+
+          echo "== Waiting for scanner warm-up: clean PNG finalize, up to 180s =="
+          # freshclam's DB is baked at build time, so the only wait here is
+          # clamd loading it into memory on boot (docs/DEPLOY.md: ~30-60s,
+          # repeats on every restart). Finalize never 503s for an unreachable
+          # scanner any more (API_GUIDE.md §8) — it accepts the file and
+          # reports scanStatus "pending_scan", so each poll attempt runs a
+          # full start/chunk/finalize cycle (the session is consumed either
+          # way) and checks the response body's scanStatus.
+          scan_status=""
+          deadline=$((SECONDS + 180))
+          while [ $SECONDS -lt $deadline ]; do
+            curl -s -X POST "$BASE/uploads" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              -d "{\"filename\":\"smoke.png\",\"project\":\"$PROJ_ID\"}" -o /tmp/resp.json
+            UPLOAD_ID=$(jget .data.uploadId)
+            curl -s -X PUT "$BASE/uploads/$UPLOAD_ID/chunks/0" -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/octet-stream" --data-binary @/tmp/smoke.png -o /dev/null
+            curl -s -X POST "$BASE/uploads/$UPLOAD_ID/finalize" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              -d '{}' -o /tmp/resp.json
+            scan_status=$(jget .data.scanStatus)
+            echo "finalize attempt: scanStatus=$scan_status"
+            if [ "$scan_status" = "clean" ]; then break; fi
+            sleep 5
+          done
+          if [ "$scan_status" != "clean" ]; then
+            echo "FAIL: scanner never became ready within 180s (last scanStatus=$scan_status)"
+            docker logs sofos-smoke
+            exit 1
+          fi
+          echo "PASS: clamd warm; clean PNG upload finalizes with scanStatus=clean"
+
+          echo "== Gate: register+login round-trip =="
+          LOGIN_CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" -X POST "$BASE/auth/login" -H "Content-Type: application/json" \
+            -d '{"username":"smoketest","password":"smoketestpass1"}')
+          if [ "$LOGIN_CODE" != "200" ]; then
+            echo "FAIL: login round-trip -> $LOGIN_CODE"; cat /tmp/resp.json; exit 1
+          fi
+          echo "PASS: register+login round-trip 200"
+
+          echo "== Gate: EICAR upload -> 422 =="
+          # Split/concatenated so the literal EICAR signature never appears
+          # in this file (the same raw-chunk approach as the API client — avoids
+          # tripping any AV scanning the repo itself).
+          EICAR_PART1='X5O!P%@AP[4\PZX54(P^)7CC)7}'
+          EICAR_PART2='$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+          printf '%s%s' "$EICAR_PART1" "$EICAR_PART2" > /tmp/smoke_eicar.txt
+
+          curl -s -X POST "$BASE/uploads" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d "{\"filename\":\"smoke-eicar.txt\",\"project\":\"$PROJ_ID\"}" -o /tmp/resp.json
+          EICAR_UPLOAD_ID=$(jget .data.uploadId)
+          curl -s -X PUT "$BASE/uploads/$EICAR_UPLOAD_ID/chunks/0" -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/octet-stream" --data-binary @/tmp/smoke_eicar.txt -o /dev/null
+          EICAR_CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" -X POST "$BASE/uploads/$EICAR_UPLOAD_ID/finalize" \
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{}')
+          if [ "$EICAR_CODE" != "422" ]; then
+            echo "FAIL: EICAR upload finalize -> $EICAR_CODE (expected 422)"; cat /tmp/resp.json; exit 1
+          fi
+          echo "PASS: EICAR upload finalize -> 422"
+
+          echo "== Gate: clamd socket exists in-container =="
+          if ! docker exec sofos-smoke test -S /var/run/clamav/clamd.ctl; then
+            echo "FAIL: /var/run/clamav/clamd.ctl socket missing"
+            exit 1
+          fi
+          echo "PASS: clamd socket present"
+
+          echo "== Gate: GET / serves the SPA =="
+          ROOT_CODE=$(curl -s -o /tmp/root.html -w "%{http_code}" "$ROOT/")
+          if [ "$ROOT_CODE" != "200" ] || ! grep -q '<div id="root"' /tmp/root.html; then
+            echo "FAIL: GET / -> $ROOT_CODE, or missing <div id=\"root\">"
+            cat /tmp/root.html
+            exit 1
+          fi
+          echo "PASS: GET / serves the SPA (200, <div id=\"root\"> present)"
+
+          echo "== Gate: restart persistence =="
+          docker restart sofos-smoke
+          up=0
+          for i in $(seq 1 120); do
+            if curl -sf "$BASE/health" -o /dev/null; then up=1; break; fi
+            sleep 1
+          done
+          if [ "$up" -ne 1 ]; then
+            echo "FAIL: container never became healthy again after restart; docker logs follow:"
+            docker logs sofos-smoke
+            exit 1
+          fi
+          RELOGIN_CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" -X POST "$BASE/auth/login" -H "Content-Type: application/json" \
+            -d '{"username":"smoketest","password":"smoketestpass1"}')
+          if [ "$RELOGIN_CODE" != "200" ]; then
+            echo "FAIL: login after restart -> $RELOGIN_CODE"; cat /tmp/resp.json; exit 1
+          fi
+          echo "PASS: restart persistence — container healthy again, registered login still works"
+
+          echo "== All docker-smoke gates passed =="
+
+      - name: Teardown
+        if: always()
+        run: |
+          docker rm -fv sofos-smoke 2>/dev/null || true
+          docker volume rm sofos-smoke-data sofos-smoke-uploads sofos-smoke-backups || true

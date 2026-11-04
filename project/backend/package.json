@@ -1,13 +1,16 @@
 {
-  "name": "backend",
+  "name": "sofos-backend",
   "version": "1.0.0",
-  "description": "Your Final Project's backend goes here.   You can rename the folder name to your poject name.",
+  "description": "Sofos API and data services",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "test:api": "node scripts/sofos-v4-test.js",
+    "test:migration": "node scripts/sofos-v4-migration-test.js",
+    "migrate:sofos-v4": "node scripts/migrate-sofos-v4.js"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +23,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "express-validator": "^7.3.2",
+    "file-type": "^21.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.3"
   },

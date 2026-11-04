@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — mock6: Note page + comments + custom dropdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #003478; --navy-deep: #002A61; --navy-soft: #E9F0FB;
+    --accent: #0E9CD6; --accent-soft: #E1F2FA;
+    --bg: #F4F6FA; --surface: #FFFFFF; --panel: #EEF2F8;
+    --text: #16233A; --muted: #5C6670; --border: #DDE3ED;
+    --danger: #B42318; --danger-bg: #FBEAE9;
+    --gold-bg: #FBF3DC; --gold-border: #C9A94E;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+  .mock-banner { max-width: 1250px; margin: 0 auto; padding: 2.2rem 1.5rem 1rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  h1 { font-family: var(--font-display); font-size: 1.8rem; margin: .3rem 0 .4rem; }
+  .lede { color: var(--muted); max-width: 80ch; font-size: .92rem; margin: 0; }
+  .lede b { color: var(--navy); }
+  .note-dot { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); background: var(--accent-soft); font-family: var(--font-mono); font-size: .64rem; font-weight: 600; margin-left: .4rem; vertical-align: middle; }
+
+  .mock-body { max-width: 1250px; margin: 1rem auto 3rem; padding: 0 1.5rem; display: flex; gap: 1.75rem; align-items: flex-start; }
+  .mock-canvas { flex: 1; min-width: 0; }
+  .legend { flex: none; width: 290px; position: sticky; top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.2rem; }
+  .legend h2 { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--navy); margin: 0 0 .9rem; }
+  .legend ol { list-style: none; margin: 0; padding: 0; }
+  .legend li { display: flex; gap: .6rem; margin-bottom: .95rem; font-size: .82rem; color: var(--muted); }
+  .legend b { display: block; font-weight: 600; margin-bottom: .1rem; color: var(--text); }
+  .legend-dot { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--navy); color: var(--navy); font-family: var(--font-mono); font-size: .68rem; font-weight: 600; display: flex; align-items: center; justify-content: center; background: var(--navy-soft); }
+
+  .app-frame { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .app-header { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 1.3rem; border-bottom: 1px solid var(--border); }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: .5rem; }
+  .wordmark .wp { width: 11px; height: 11px; border-radius: 50%; border: 3px solid var(--navy); display: inline-block; }
+  .crumbs { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+  .crumbs b { color: var(--navy); font-weight: 500; }
+
+  .note-layout { display: flex; align-items: stretch; min-height: 560px; }
+  aside.note-switcher { width: 210px; flex: none; border-right: 1px solid var(--border); padding: 1rem .7rem; background: var(--surface); }
+  .sw-label { font-family: var(--font-mono); font-size: .64rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 0 .5rem; margin-bottom: .4rem; }
+  .sw-row { display: block; padding: .38rem .55rem; border-radius: 8px; font-size: .85rem; text-decoration: none; color: var(--text); }
+  .sw-row:hover { background: var(--navy-soft); }
+  .sw-row.active { background: var(--navy); color: #fff; }
+  .sw-row .m { display: block; font-family: var(--font-mono); font-size: .62rem; color: var(--muted); }
+  .sw-row.active .m { color: #CBD9EF; }
+  .sw-add { color: var(--navy); font-weight: 600; font-size: .8rem; padding: .38rem .55rem; display: block; text-decoration: none; }
+
+  main.note-main { flex: 1; min-width: 0; padding: 1.4rem 1.8rem; }
+  .note-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: .3rem; }
+  .note-head h2 { font-family: var(--font-display); font-size: 1.5rem; margin: 0; }
+  .btn { font-weight: 600; font-size: .8rem; border-radius: 8px; padding: .35rem .8rem; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--navy); font-family: var(--font-body); }
+  .btn-approve { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .note-meta { font-family: var(--font-mono); font-size: .68rem; color: var(--muted); margin-bottom: 1rem; }
+  .content-cols { display: flex; gap: 1.4rem; align-items: flex-start; }
+  .note-body { flex: 1; min-width: 0; max-width: 62ch; font-size: .95rem; }
+  .note-body h3 { font-family: var(--font-display); font-size: 1.05rem; margin: 1.1rem 0 .4rem; }
+  .note-body p, .note-body li { margin: 0 0 .7rem; }
+  .hunk-add { background: var(--navy-soft); color: var(--navy-deep); border-radius: 3px; padding: .04rem .15rem; font-weight: 500; }
+  .hl-comment { background: var(--gold-bg); border-bottom: 2px dotted var(--gold-border); border-radius: 3px; padding: .04rem .15rem; }
+
+  .margin { flex: none; width: 265px; display: flex; flex-direction: column; gap: .7rem; }
+  .mcard { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .7rem .8rem; box-shadow: 0 2px 8px rgba(0,0,0,.07); font-size: .82rem; }
+  .mcard-head { display: flex; align-items: center; gap: .45rem; margin-bottom: .35rem; }
+  .avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--navy); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: .6rem; flex: none; }
+  .who { font-weight: 600; font-size: .8rem; }
+  .when { font-family: var(--font-mono); font-size: .62rem; color: var(--muted); }
+  .kind { font-family: var(--font-mono); font-size: .58rem; letter-spacing: .06em; text-transform: uppercase; margin-left: auto; color: var(--muted); }
+  .worddiff .del { color: var(--danger); text-decoration: line-through; text-decoration-thickness: 1px; background: var(--danger-bg); border-radius: 3px; padding: 0 .1rem; }
+  .worddiff .add { color: var(--navy-deep); background: var(--navy-soft); border-radius: 3px; padding: 0 .1rem; font-weight: 500; }
+  .mcard-actions { display: flex; gap: .4rem; margin-top: .5rem; }
+  .mcard-actions .btn { padding: .22rem .6rem; font-size: .72rem; }
+  .thread { border-left: 2px solid var(--border); margin: .5rem 0 0 .6rem; padding-left: .6rem; display: flex; flex-direction: column; gap: .5rem; }
+  .reply-input { border: 1px solid var(--border); border-radius: 8px; padding: .3rem .55rem; font-size: .76rem; color: var(--muted); background: var(--panel); margin-top: .5rem; }
+  .linklike { border: none; background: none; color: var(--muted); font-size: .72rem; cursor: pointer; padding: 0; }
+  .linklike:hover { color: var(--navy); }
+
+  .dd-section { margin-top: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.4rem; }
+  .dd-section h3 { font-family: var(--font-display); margin: 0 0 .8rem; font-size: 1.05rem; }
+  .dd-row { display: flex; gap: 2.5rem; flex-wrap: wrap; align-items: flex-start; }
+  .dd-demo { font-size: .85rem; }
+  .dd-demo .cap { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: .45rem; }
+  .dd { position: relative; width: 210px; }
+  .dd-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .42rem .7rem; font-size: .85rem; color: var(--text); cursor: pointer; font-family: var(--font-body); }
+  .dd-btn:hover { border-color: var(--navy); }
+  .dd-btn .chev { color: var(--muted); font-size: .7rem; }
+  .dd-menu { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.14); padding: .3rem; z-index: 5; }
+  .dd-opt { padding: .4rem .6rem; border-radius: 7px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+  .dd-opt:hover { background: var(--navy-soft); }
+  .dd-opt.sel { background: var(--navy); color: #fff; }
+  .dd-opt .tick { font-size: .75rem; }
+  select.old { width: 210px; padding: .42rem .5rem; font-size: .85rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+
+  footer { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: .7rem; padding: 1.5rem; }
+  @media (max-width: 1000px) { .mock-body { flex-direction: column; } .legend { position: static; width: 100%; } .content-cols { flex-direction: column; } .margin { width: 100%; } }
+</style>
+</head>
+<body>
+
+<header class="mock-banner">
+  <span class="eyebrow">Proposal · mock6 · not implemented · P53-P55</span>
+  <h1>The note page — full-screen reading, margin review, comments, and the new dropdown</h1>
+  <p class="lede">Per Samuel's rulings: notes open on <b>their own page</b> (no more squeezing into the project band), with a <b>note-switcher sidebar</b>, suggestions + comments in the margin, <b>word-level diffs</b> (your append shows as an addition only — nothing falsely struck through), applied cards <b>gone once applied</b>, and below: the custom dropdown replacing every system select.</p>
+</header>
+
+<div class="mock-body">
+  <div class="mock-canvas">
+    <div class="app-frame">
+      <header class="app-header">
+        <span class="wordmark"><span class="wp"></span>Sofos</span>
+        <span class="crumbs">Overview / P48 Demo / Launch site / <b>Notes</b></span>
+      </header>
+      <div class="note-layout">
+        <aside class="note-switcher">
+          <span class="sw-label">Notes · Launch site<span class="note-dot">2</span></span>
+          <a class="sw-row active" href="#">Copy freeze checklist<span class="m">upd. Aug 19</span></a>
+          <a class="sw-row" href="#">Positioning &amp; messaging<span class="m">upd. Aug 12</span></a>
+          <a class="sw-row" href="#">Launch retro template<span class="m">upd. Jul 30</span></a>
+          <a class="sw-add" href="#">+ Note</a>
+        </aside>
+        <main class="note-main">
+          <div class="note-head">
+            <h2>Copy freeze checklist<span class="note-dot">1</span></h2>
+            <span><button class="btn">History</button> <button class="btn">Edit</button> <button class="btn">Comment</button></span>
+          </div>
+          <p class="note-meta">in Launch site · updated Aug 19 by admin · 2 pending suggestions · 1 open comment</p>
+          <div class="content-cols">
+            <div class="note-body">
+              <p>Everything below must be locked before the <span class="hl-comment">July 30 freeze</span>. Owners are on the hook for their own line.</p>
+              <h3>Pages</h3>
+              <p>TEST-BED stress note body content for Cmd-K arrival pane-open check. <span class="hunk-add">Thats nice and all but we need to remember to check Cmd-K and write up a proper explanation.</span><span class="note-dot">3</span></p>
+              <p>Anything landing after the freeze slips to the v2.1 notes.</p>
+            </div>
+            <div class="margin">
+              <div class="mcard">
+                <div class="mcard-head"><span class="avatar">AD</span><span class="who">admin</span><span class="when">just now</span><span class="kind">suggestion</span></div>
+                <div class="worddiff">…pane-open check. <span class="add">Thats nice and all but we need to remember to check Cmd-K and write up a proper explanation.</span><span class="note-dot">4</span></div>
+                <div class="mcard-actions"><button class="btn btn-approve">Approve</button><button class="btn">Reject</button></div>
+              </div>
+              <div class="mcard">
+                <div class="mcard-head"><span class="avatar">SA</span><span class="who">samuel</span><span class="when">Aug 12</span><span class="kind">comment</span></div>
+                <div>Is July 30 still realistic after the legal delay?<span class="note-dot">5</span></div>
+                <div class="thread">
+                  <div><span class="who" style="font-size:.74rem">Dana</span> <span class="when">Aug 13</span><br>Legal says Aug 14 latest — I'd slip it.</div>
+                </div>
+                <div class="reply-input">Reply…</div>
+                <div style="margin-top:.4rem"><button class="linklike">Resolve</button></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="dd-section">
+      <h3>The new dropdown — replaces every system select<span class="note-dot">6</span></h3>
+      <div class="dd-row">
+        <div class="dd-demo">
+          <span class="cap">Today (system default)</span>
+          <select class="old"><option>Sort: manual</option></select>
+        </div>
+        <div class="dd-demo">
+          <span class="cap">Proposed — closed</span>
+          <div class="dd"><button class="dd-btn">Sort: manual <span class="chev">▾</span></button></div>
+        </div>
+        <div class="dd-demo" style="min-height: 190px">
+          <span class="cap">Proposed — open</span>
+          <div class="dd">
+            <button class="dd-btn">Sort: manual <span class="chev">▴</span></button>
+            <div class="dd-menu">
+              <div class="dd-opt sel">Manual <span class="tick">✓</span></div>
+              <div class="dd-opt">Due date</div>
+              <div class="dd-opt">Priority</div>
+              <div class="dd-opt">Newest</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="legend">
+    <h2>What this depicts</h2>
+    <ol>
+      <li><span class="legend-dot">1</span><span><b>Notes get their own page</b>Full-width reading room, its own web address, History/Edit up top. Clicking a note anywhere (project page, search) lands here. The project page's Notes column becomes a simple list of links.</span></li>
+      <li><span class="legend-dot">2</span><span><b>Note-switcher sidebar</b>Every note in this project, one click apart, + New note. Your ruling: "quickly switch to other notes."</span></li>
+      <li><span class="legend-dot">3</span><span><b>Word-level highlighting — your bug, fixed</b>You appended a sentence; ONLY the appended sentence is highlighted as an addition. Nothing falsely struck through. (This fix is already being coded, independent of this mock.)</span></li>
+      <li><span class="legend-dot">4</span><span><b>Margin card shows the real change</b>Same word-level treatment on the card: context ellipsed, only the added words marked. Once approved, the card and highlight disappear — no lingering "applied".</span></li>
+      <li><span class="legend-dot">5</span><span><b>Comments with threads (P55)</b>Gold-highlighted anchor text, comment + replies in a thread, Reply box, Resolve (writers can resolve anyone's; authors delete their own).</span></li>
+      <li><span class="legend-dot">6</span><span><b>The dropdown</b>Same navy language as everything else: closed = a quiet bordered button; open = a floating menu with the selected row filled navy. Full keyboard support (arrows, Enter, Escape, type-to-find). Replaces every system select app-wide.</span></li>
+    </ol>
+  </aside>
+</div>
+
+<footer>sofos · design mock · docs/design/mock6-note-page.html · 2026-08</footer>
+</body>
+</html>

@@ -4,7 +4,32 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>Sofos</title>
+    <script>
+      // Pre-paint theme resolve — mirrors src/theme.js's getStoredPref/applyPref
+      // resolve logic by hand; a module import would paint light first, so this
+      // stays inline and import-free.
+      (function () {
+        var pref = "system";
+        try {
+          var key = "sofos.themePref";
+          var raw = localStorage.getItem(key);
+          if (raw === null) {
+            var legacyKey = atob("eWl0cm8udGhlbWVQcmVm");
+            raw = localStorage.getItem(legacyKey);
+            if (raw !== null) {
+              localStorage.setItem(key, raw);
+              localStorage.removeItem(legacyKey);
+            }
+          }
+          if (raw === "light" || raw === "dark" || raw === "system") pref = raw;
+        } catch (e) {}
+        var resolved = pref === "system"
+          ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : pref;
+        document.documentElement.dataset.theme = resolved;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

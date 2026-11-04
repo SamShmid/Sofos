@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — mock2: dark mode, stage 2 (B7)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ---- proposed dark tokens (B7 stage 2) ---- */
+    --navy: #7FB0F2;          /* text/icon accent on dark — light-mode navy #003478 is unreadable as text here */
+    --navy-fill: #0B3E85;     /* filled surfaces (buttons, done-state) — navy lifted one stop for dark contrast */
+    --navy-soft: rgba(127,176,242,0.14);
+    --accent: #46D0FF;        /* azure, brightened — still the ONLY "you are here" accent */
+    --accent-soft: rgba(70,208,255,0.14);
+    --suggester-text: #7FDBFF;
+
+    --bg: #0B1220;            /* surface / base elevation */
+    --surface: #121B2E;       /* surface / raised elevation — cards */
+    --panel: #101827;         /* quiet panel band — between base and raised */
+    --overlay: #182640;       /* surface / overlay elevation — modals */
+
+    --text: #E7ECF5;
+    --muted: #8E9BB3;
+    --border: #29344A;        /* border-forward: cards separate by border, not shadow */
+
+    --danger: #FF8A7A;
+    --danger-soft: rgba(255,107,94,0.14);
+    --danger-border: rgba(255,107,94,0.4);
+
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-pill: 999px; --radius-card: 12px;
+    /* glow, not shadow: dark surfaces don't separate by drop-shadow (invisible
+       on dark-on-dark) — a faint colored glow does the elevation job instead */
+    --glow-card: 0 0 0 1px var(--border), 0 0 28px rgba(70,208,255,0.05);
+    --glow-modal: 0 0 0 1px var(--border), 0 12px 40px rgba(0,0,0,0.55), 0 0 32px rgba(70,208,255,0.08);
+
+    /* 8 dark-safe tag hues — designed independently for dark, not the light
+       set with lightness inverted (which reads as washed-out pastel-on-black) */
+    --tag-d0-bg: rgba(45,212,191,0.14);  --tag-d0-border: rgba(45,212,191,0.4);  --tag-d0-text: #5EEAD4; /* teal */
+    --tag-d1-bg: rgba(140,210,90,0.14);  --tag-d1-border: rgba(140,210,90,0.4);  --tag-d1-text: #A6E08C; /* green */
+    --tag-d2-bg: rgba(240,196,80,0.14);  --tag-d2-border: rgba(240,196,80,0.4);  --tag-d2-text: #F5D479; /* gold */
+    --tag-d3-bg: rgba(255,138,101,0.14); --tag-d3-border: rgba(255,138,101,0.4); --tag-d3-text: #FFA98A; /* coral */
+    --tag-d4-bg: rgba(240,120,180,0.14); --tag-d4-border: rgba(240,120,180,0.4); --tag-d4-text: #F5A0CB; /* pink */
+    --tag-d5-bg: rgba(178,140,240,0.14); --tag-d5-border: rgba(178,140,240,0.4); --tag-d5-text: #C6ADF5; /* purple */
+    --tag-d6-bg: rgba(130,150,240,0.14); --tag-d6-border: rgba(130,150,240,0.4); --tag-d6-text: #A9B8F7; /* indigo */
+    --tag-d7-bg: rgba(110,190,205,0.14); --tag-d7-border: rgba(110,190,205,0.4); --tag-d7-text: #9AD3E3; /* slate-cyan */
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+  a { color: inherit; }
+
+  .mock-banner { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 1.25rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 500; }
+  .mock-title { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; margin: 0.3rem 0 0.5rem; letter-spacing: -0.01em; }
+  .mock-lede { color: var(--muted); max-width: 74ch; margin: 0; font-size: 0.92rem; }
+  .mock-lede b { color: var(--navy); }
+  .mock-lede code { font-family: var(--font-mono); font-size: 0.85em; background: var(--navy-soft); color: var(--navy); padding: 0.05rem 0.35rem; border-radius: var(--radius-sm); }
+
+  /* ---- token comparison table ---- */
+  .token-wrap { max-width: 1200px; margin: 0 auto 2.5rem; padding: 0 1.5rem; }
+  .token-table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1.2rem 1.4rem; box-shadow: var(--glow-card); }
+  .token-table-card h2 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0 0 1rem; }
+  table.tokens { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  table.tokens th { text-align: left; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+  table.tokens td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  table.tokens tr:last-child td { border-bottom: none; }
+  table.tokens code { font-family: var(--font-mono); font-size: 0.78rem; }
+  .swatch-pair { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .sw { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); flex: none; }
+
+  .tag-swatches { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem; }
+  .tag-swatch { font-family: var(--font-mono); font-size: 0.68rem; padding: 0.25rem 0.55rem; border-radius: var(--radius-pill); border: 1px solid; }
+
+  .mock-body { max-width: 1480px; margin: 0 auto; padding: 0 1.5rem 4rem; display: flex; gap: 1.75rem; align-items: flex-start; }
+  .mock-canvas { flex: 1 1 1200px; max-width: 1200px; min-width: 0; }
+  .legend { flex: none; width: 280px; position: sticky; top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1.1rem 1.2rem; box-shadow: var(--glow-card); }
+  .legend h2 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.9rem; }
+  .legend ol { list-style: none; margin: 0; padding: 0; }
+  .legend li { display: flex; gap: 0.6rem; margin-bottom: 0.9rem; font-size: 0.82rem; color: var(--text); }
+  .legend li:last-child { margin-bottom: 0; }
+  .legend b { display: block; font-weight: 600; margin-bottom: 0.1rem; }
+  .legend .b-code { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent); display: block; margin-bottom: 0.15rem; }
+  .legend-dot {
+    flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--navy); color: var(--navy);
+    font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; display: flex; align-items: center; justify-content: center;
+    background: var(--navy-soft);
+  }
+  .note-dot {
+    display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%;
+    border: 1.5px solid var(--accent); color: var(--accent); background: var(--accent-soft);
+    font-family: var(--font-mono); font-size: 0.64rem; font-weight: 600; margin-left: 0.4rem; vertical-align: middle;
+  }
+
+  .app-frame { border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--glow-card); background: var(--surface); }
+  .app-header { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 1.5rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .wordmark .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--navy); display: inline-block; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-right a { font-size: 0.85rem; color: var(--text); text-decoration: none; font-weight: 500; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--navy-fill); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; border: 1px solid var(--border); }
+
+  .app-body { display: flex; align-items: stretch; min-height: 720px; }
+
+  aside.app-side { width: 236px; flex: none; padding: 1.4rem 0.85rem; border-right: 1px solid var(--border); background: var(--surface); }
+  .side-label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 0.6rem; margin: 1.1rem 0 0.35rem; }
+  .side-label:first-child { margin-top: 0; }
+  .side-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; border-radius: var(--radius-lg); text-decoration: none; color: var(--text); font-size: 0.88rem; font-weight: 500; }
+  .side-row:hover { background: var(--navy-soft); }
+  .side-row.active { background: var(--navy-fill); color: #fff; box-shadow: 0 0 0 1px var(--accent-soft); }
+  .side-row .mini { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); }
+  .side-row.active .mini { color: #CBD9EF; }
+  .side-add { color: var(--navy) !important; font-weight: 600; }
+  .side-trail { margin: 0.15rem 0 0.15rem 0.75rem; padding-left: 0.6rem; border-left: 2px solid var(--border); }
+  .side-trail .side-row { font-size: 0.85rem; }
+
+  main.app-main { flex: 1; padding: 2rem 2.25rem 2.5rem; min-width: 0; }
+
+  .breadcrumbs { display: flex; flex-wrap: wrap; align-items: baseline; margin-bottom: 0.6rem; font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); }
+  .crumb { color: var(--muted); text-decoration: none; }
+  .crumb:hover { color: var(--navy); }
+  .crumb-sep { margin: 0 0.3rem; }
+  .crumb-current { color: var(--muted); }
+
+  .page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  h1 { font-family: var(--font-display); font-size: 2rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; display: flex; align-items: center; gap: 0.6rem; }
+  .btn { font-weight: 600; font-size: 0.82rem; border-radius: var(--radius-lg); padding: 0.4rem 0.8rem; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--navy); font-family: var(--font-body); }
+  .btn:hover { background: var(--navy-soft); }
+  .page-desc { color: var(--muted); margin: 0 0 1.1rem; max-width: 68ch; font-size: 0.92rem; }
+
+  .chip {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.18rem 0.5rem; border-radius: var(--radius-pill); border: 1px solid var(--border);
+    color: var(--muted); background: var(--surface); display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .chip.role-writer { border-color: var(--navy); color: var(--navy); background: var(--navy-soft); }
+  .chip.op { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .chip.tag { text-transform: none; letter-spacing: 0.02em; }
+  .chip.tag.d0.active { background: var(--tag-d0-bg); border-color: var(--tag-d0-border); color: var(--tag-d0-text); }
+  .chip.tag.d1.active { background: var(--tag-d1-bg); border-color: var(--tag-d1-border); color: var(--tag-d1-text); }
+  .chip.tag.d2.active { background: var(--tag-d2-bg); border-color: var(--tag-d2-border); color: var(--tag-d2-text); }
+  button.chip.tag { cursor: pointer; font: inherit; }
+
+  .views-row {
+    display: flex; align-items: center; gap: 0; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 0.15rem 0.4rem; margin-bottom: 1.6rem;
+  }
+  .views-caption { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 0.7rem; }
+  .views-link { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text); font-weight: 600; font-size: 0.88rem; padding: 0.7rem 0.85rem; border-radius: var(--radius-lg); }
+  .views-link:hover { background: var(--navy-soft); }
+  .views-link .mini-route { display: inline-flex; gap: 2px; }
+  .views-link .mini-route i { width: 10px; height: 3px; border-radius: 2px; background: var(--border); }
+  .views-link .mini-route i.done { background: var(--navy); }
+  .views-link .mini-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); font-weight: 400; }
+  .views-sep { width: 1px; align-self: stretch; margin: 0.6rem 0; background: var(--border); }
+  .views-row .note-dot { margin-left: auto; margin-right: 0.4rem; }
+
+  .section-label {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); font-weight: 500; margin: 2rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-label::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; }
+  .pcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1rem 1.1rem; text-decoration: none; color: inherit; display: block; }
+  .pcard:hover { border-color: var(--navy); box-shadow: 0 0 0 1px var(--navy), 0 0 20px rgba(127,176,242,0.12); }
+  .pcard h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin: 0 0 0.3rem; color: var(--text); }
+  .pcard p { font-size: 0.82rem; color: var(--muted); margin: 0 0 0.6rem; min-height: 2.3em; }
+  .pcard-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0 0 0.6rem; }
+  .pcard .meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); display: flex; gap: 0.8rem; }
+  .pcard .meta .done { color: var(--navy); }
+  .pcard-new { border-style: dashed; display: flex; align-items: center; justify-content: center; color: var(--navy); font-weight: 600; font-size: 0.88rem; min-height: 96px; background: none; cursor: pointer; font-family: var(--font-body); width: 100%; }
+  .pcard-new:hover { background: var(--navy-soft); }
+
+  .projects-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: -0.35rem 0 0.9rem; }
+  .projects-controls select { font-family: var(--font-body); font-size: 0.85rem; padding: 0.35rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); }
+  .tag-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+
+  .panel-band { margin-top: 2.2rem; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 0.3rem 1.4rem 1.4rem; }
+  .panel-section { padding-top: 1.1rem; border-top: 1px solid var(--border); }
+  .panel-section:first-child { border-top: none; }
+  .panel-section .section-label { color: var(--accent); margin: 1rem 0 0.7rem; }
+  .panel-section .section-label::after { border-top-color: var(--border); }
+
+  .sugg { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius-lg); padding: 0.75rem 0.9rem; display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; box-shadow: 0 0 20px rgba(70,208,255,0.05); }
+  .sugg .what { flex: 1; font-size: 0.86rem; min-width: 12rem; }
+  .sugg .what b { font-weight: 600; color: var(--text); }
+  .sugg .who { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .btn-approve { background: var(--navy-fill); color: #fff; border-color: var(--navy-fill); }
+  .btn-approve:hover { box-shadow: 0 0 16px rgba(127,176,242,0.35); }
+  .btn-reject { color: var(--muted); }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+  .row-list { list-style: none; margin: 0; padding: 0; }
+  .row-list li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-lg); }
+  .row-list li:hover { background: var(--surface); }
+  .row-list a { color: var(--text); font-weight: 500; font-size: 0.87rem; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; flex: 1; }
+  .row-list .fname { color: var(--text); font-weight: 500; font-size: 0.87rem; flex: 1; }
+  .row-list .meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .glyph { color: var(--navy); font-size: 0.85rem; width: 1.1rem; text-align: center; }
+  .add-inline { display: inline-block; margin-top: 0.3rem; color: var(--navy); font-weight: 600; font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.3rem 0.5rem; border-radius: var(--radius-lg); font-family: var(--font-body); }
+  .add-inline:hover { background: var(--navy-soft); }
+
+  footer.mock-foot { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; padding: 2rem; }
+
+  @media (max-width: 1080px) {
+    .mock-body { flex-direction: column; }
+    .legend { position: static; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="mock-banner">
+  <span class="eyebrow">Proposal · mock2 · not implemented</span>
+  <h1 class="mock-title">Dark mode — stage 2</h1>
+  <p class="mock-lede">
+    Visualizes <b>B7 stage 2</b>: the full dark palette (base/raised/overlay elevations, adjusted navy/azure, dark-safe tag hues,
+    border-forward cards, glow instead of shadow) applied to the <code>mock2-workspace.html</code> composition. The token table
+    below shows every proposed dark value next to its shipped light-mode equivalent.
+  </p>
+</header>
+
+<div class="token-wrap">
+  <div class="token-table-card">
+    <h2>Proposed dark tokens vs. shipped light tokens</h2>
+    <table class="tokens">
+      <thead><tr><th>Token</th><th>Light (shipped)</th><th>Dark (proposed)</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><code>--bg</code></td><td><span class="swatch-pair"><span class="sw" style="background:#F4F6FA;border-color:#ccc"></span>#F4F6FA</span></td><td><span class="swatch-pair"><span class="sw" style="background:#0B1220"></span>#0B1220</span></td><td>base elevation</td></tr>
+        <tr><td><code>--surface</code></td><td><span class="swatch-pair"><span class="sw" style="background:#FFFFFF;border-color:#ccc"></span>#FFFFFF</span></td><td><span class="swatch-pair"><span class="sw" style="background:#121B2E"></span>#121B2E</span></td><td>raised elevation — cards</td></tr>
+        <tr><td><code>--panel</code> <em>(new)</em></td><td>—</td><td><span class="swatch-pair"><span class="sw" style="background:#101827"></span>#101827</span></td><td>sits between base and raised, for the quiet band</td></tr>
+        <tr><td><code>--overlay</code> <em>(new)</em></td><td>—</td><td><span class="swatch-pair"><span class="sw" style="background:#182640"></span>#182640</span></td><td>overlay elevation — modals/toasts</td></tr>
+        <tr><td><code>--navy</code> <em>(as text)</em></td><td><span class="swatch-pair"><span class="sw" style="background:#003478"></span>#003478</span></td><td><span class="swatch-pair"><span class="sw" style="background:#7FB0F2"></span>#7FB0F2</span></td><td>lifted for AA contrast on dark; #003478 as text on #0B1220 fails</td></tr>
+        <tr><td><code>--navy-fill</code> <em>(new)</em></td><td>(uses --navy)</td><td><span class="swatch-pair"><span class="sw" style="background:#0B3E85"></span>#0B3E85</span></td><td>filled buttons / active rows — still reads as "navy," lifted one stop</td></tr>
+        <tr><td><code>--accent</code> (azure)</td><td><span class="swatch-pair"><span class="sw" style="background:#0E9CD6"></span>#0E9CD6</span></td><td><span class="swatch-pair"><span class="sw" style="background:#46D0FF"></span>#46D0FF</span></td><td>brightened; still the ONLY you-are-here accent</td></tr>
+        <tr><td><code>--text</code></td><td><span class="swatch-pair"><span class="sw" style="background:#16233A"></span>#16233A</span></td><td><span class="swatch-pair"><span class="sw" style="background:#E7ECF5"></span>#E7ECF5</span></td><td>not pure white — reduces glare</td></tr>
+        <tr><td><code>--muted</code></td><td><span class="swatch-pair"><span class="sw" style="background:#5C6670"></span>#5C6670</span></td><td><span class="swatch-pair"><span class="sw" style="background:#8E9BB3"></span>#8E9BB3</span></td><td></td></tr>
+        <tr><td><code>--border</code></td><td><span class="swatch-pair"><span class="sw" style="background:#DDE3ED;border-color:#ccc"></span>#DDE3ED</span></td><td><span class="swatch-pair"><span class="sw" style="background:#29344A"></span>#29344A</span></td><td>border-forward: cards separate by border, not drop-shadow</td></tr>
+        <tr><td><code>--danger</code></td><td><span class="swatch-pair"><span class="sw" style="background:#B42318"></span>#B42318</span></td><td><span class="swatch-pair"><span class="sw" style="background:#FF8A7A"></span>#FF8A7A</span></td><td>lightened for contrast; still the only destructive color</td></tr>
+        <tr><td>shadow strategy</td><td><code>box-shadow: 0 2px 8px rgba(0,0,0,.06)</code></td><td><code>0 0 0 1px border, 0 0 28px accent@5%</code></td><td>"glow, not shadow" — a black drop-shadow is invisible on a dark surface</td></tr>
+      </tbody>
+    </table>
+    <div class="tag-swatches">
+      <span class="tag-swatch" style="background:var(--tag-d0-bg);border-color:var(--tag-d0-border);color:var(--tag-d0-text)">teal</span>
+      <span class="tag-swatch" style="background:var(--tag-d1-bg);border-color:var(--tag-d1-border);color:var(--tag-d1-text)">green</span>
+      <span class="tag-swatch" style="background:var(--tag-d2-bg);border-color:var(--tag-d2-border);color:var(--tag-d2-text)">gold</span>
+      <span class="tag-swatch" style="background:var(--tag-d3-bg);border-color:var(--tag-d3-border);color:var(--tag-d3-text)">coral</span>
+      <span class="tag-swatch" style="background:var(--tag-d4-bg);border-color:var(--tag-d4-border);color:var(--tag-d4-text)">pink</span>
+      <span class="tag-swatch" style="background:var(--tag-d5-bg);border-color:var(--tag-d5-border);color:var(--tag-d5-text)">purple</span>
+      <span class="tag-swatch" style="background:var(--tag-d6-bg);border-color:var(--tag-d6-border);color:var(--tag-d6-text)">indigo</span>
+      <span class="tag-swatch" style="background:var(--tag-d7-bg);border-color:var(--tag-d7-border);color:var(--tag-d7-text)">slate-cyan</span>
+    </div>
+    <p style="color:var(--muted); font-size:0.78rem; margin:0.8rem 0 0;">8 dark-safe tag hues — designed directly for a dark background (saturated stroke + low-alpha fill + bright text), not the light set with lightness flipped, which reads as washed-out pastel-on-black.</p>
+  </div>
+</div>
+
+<div class="mock-body">
+  <div class="mock-canvas">
+    <div class="app-frame">
+      <header class="app-header">
+        <a class="wordmark" href="#"><span class="wp"></span>Sofos</a>
+        <div class="header-right"><a href="#">Settings</a><span class="avatar">AD</span></div>
+      </header>
+      <div class="app-body">
+        <aside class="app-side">
+          <div class="side-label">Yours</div>
+          <a class="side-row" href="#">Home <span class="mini">2</span></a>
+          <a class="side-row" href="#">Work <span class="mini">4</span></a>
+          <div class="side-trail">
+            <a class="side-row active" href="#">Product Launch <span class="mini">5</span></a>
+          </div>
+          <a class="side-row side-add" href="#">+ Workspace</a>
+          <div class="side-label">Shared with you</div>
+          <a class="side-row" href="#">Dana's Studio <span class="mini">reader</span></a>
+          <div class="side-label">System</div>
+          <a class="side-row" href="#">Trash <span class="mini">3</span></a>
+        </aside>
+
+        <main class="app-main">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a class="crumb" href="#">Home</a><span class="crumb-sep">/</span>
+            <a class="crumb" href="#">Work</a><span class="crumb-sep">/</span>
+            <span class="crumb-current">Product Launch</span>
+          </nav>
+
+          <div class="page-head">
+            <h1>Product Launch <span class="chip role-writer">writer</span></h1>
+            <button class="btn">History</button>
+          </div>
+          <p class="page-desc">Coordinating the web and mobile release across two teams. Shared with Dana as writer.</p>
+
+          <div class="views-row">
+            <span class="views-caption">Views</span>
+            <a class="views-link" href="#">
+              Roadmap
+              <span class="mini-route"><i class="done"></i><i class="done"></i><i></i><i></i><i></i></span>
+              <span class="mini-label">2 of 5</span>
+            </a>
+            <span class="views-sep"></span>
+            <a class="views-link" href="#">Board <span class="mini-label">See tasks by status</span></a>
+            <span class="note-dot">1</span>
+          </div>
+
+          <div class="section-label">Sub-workspaces · 1</div>
+          <div class="grid">
+            <a class="pcard" href="#">
+              <h3>Beta</h3>
+              <p>Early-access cohort — feature-flagged rollout before GA.</p>
+            </a>
+            <button type="button" class="pcard pcard-new">+ New sub-workspace</button>
+          </div>
+
+          <div class="section-label">Projects · 2 of 5</div>
+          <div class="projects-controls">
+            <select aria-label="Sort projects">
+              <option>A–Z</option>
+              <option>Newest</option>
+            </select>
+            <div class="tag-filter-bar">
+              <button type="button" class="chip tag d0 active">launch</button>
+              <button type="button" class="chip tag">web</button>
+              <button type="button" class="chip tag">mobile</button>
+              <button type="button" class="chip tag">growth</button>
+              <button type="button" class="chip tag">ops</button>
+              <span class="note-dot">2</span>
+            </div>
+          </div>
+          <div class="grid">
+            <a class="pcard" href="#">
+              <h3>Marketing Site</h3>
+              <p>Public site copy, pricing page, launch countdown banner.</p>
+              <div class="pcard-tags"><span class="chip tag">web</span><span class="chip tag d0 active">launch</span></div>
+              <span class="meta"><span>5 tasks</span><span class="done">2 done</span></span>
+            </a>
+            <a class="pcard" href="#">
+              <h3>App Store Listing</h3>
+              <p>Screenshots, description and keywords for the mobile release.</p>
+              <div class="pcard-tags"><span class="chip tag">mobile</span><span class="chip tag d0 active">launch</span></div>
+              <span class="meta"><span>4 tasks</span><span class="done">3 done</span></span>
+            </a>
+            <button type="button" class="pcard pcard-new">+ New project</button>
+          </div>
+
+          <div class="panel-band">
+            <div class="panel-section">
+              <div class="section-label">Needs your review · 1<span class="note-dot">3</span></div>
+              <div class="sugg">
+                <span class="chip op">create</span>
+                <span class="what">seedbot proposes a task: <b>"Compress hero images before launch"</b> in Marketing Site</span>
+                <span class="who">2m ago</span>
+                <button class="btn btn-approve">Approve</button>
+                <button class="btn btn-reject">Reject</button>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="twocol">
+                <div>
+                  <div class="section-label">Links · 2</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">↗</span><a href="#">Launch runbook</a><span class="meta">added Jul 19</span></li>
+                    <li><span class="glyph">↗</span><a href="#">Brand asset library</a><span class="meta">added Jul 20</span></li>
+                  </ul>
+                  <button class="add-inline">+ Link</button>
+                </div>
+                <div>
+                  <div class="section-label">Files · 1</div>
+                  <ul class="row-list">
+                    <li><span class="glyph">⬒</span><span class="fname">launch-banner-v3.png</span><span class="meta">1.4 MB · Jul 21</span></li>
+                  </ul>
+                  <button class="add-inline">+ File</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <aside class="legend">
+    <h2>What this depicts</h2>
+    <ol>
+      <li><span class="legend-dot">1</span><span><span class="b-code">B7</span><b>Elevation without shadow</b>Cards, the views row and the panel band separate from <code>--bg</code> by a visible <code>--border</code> plus a faint accent glow, not a black drop-shadow (invisible on dark).</span></li>
+      <li><span class="legend-dot">2</span><span><span class="b-code">B7</span><b>You-are-here accent survives the swap</b>Azure is brightened to <code>#46D0FF</code> so it still reads as the one non-navy, non-gray thing on the page — same rule as light mode, recalibrated for contrast.</span></li>
+      <li><span class="legend-dot">3</span><span><span class="b-code">B7</span><b>Dark-safe tag hues</b>8 hues built for a dark background from scratch (see swatches above) — not the light 8 with lightness inverted, which the proposal calls out as reading washed-out.</span></li>
+    </ol>
+  </aside>
+</div>
+
+<footer class="mock-foot">sofos · design mock · docs/design/mock2-dark.html</footer>
+</body>
+</html>

@@ -1,0 +1,253 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sofos API",
+    "version": "4.0.0",
+    "description": "Top-level workspaces, nested projects, nested tasks, roll-ups, archive, and workspace-scoped sharing. See /api/guide for behavioral details."
+  },
+  "servers": [{ "url": "/api" }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "schemas": {
+      "Id": { "type": "string", "pattern": "^[0-9a-fA-F]{24}$" },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["message"],
+            "properties": {
+              "message": { "type": "string" },
+              "code": { "type": "string" },
+              "details": {}
+            }
+          }
+        }
+      },
+      "Workspace": {
+        "type": "object",
+        "required": ["_id", "name", "superWorkspace"],
+        "properties": {
+          "_id": { "$ref": "#/components/schemas/Id" },
+          "name": { "type": "string", "maxLength": 120 },
+          "description": { "type": "string", "maxLength": 500 },
+          "isDefault": { "type": "boolean", "description": "True only for Home" },
+          "superWorkspace": { "$ref": "#/components/schemas/Id" },
+          "effectiveRole": { "type": "string", "enum": ["reader", "suggester", "writer", "owner"] }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "required": ["_id", "name", "workspace", "status"],
+        "properties": {
+          "_id": { "$ref": "#/components/schemas/Id" },
+          "name": { "type": "string", "maxLength": 120 },
+          "description": { "type": "string", "maxLength": 500 },
+          "tags": { "type": "array", "maxItems": 10, "items": { "type": "string", "maxLength": 30 } },
+          "status": { "type": "string", "enum": ["active", "blocked", "completed"] },
+          "archivedAt": { "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+          "workspace": { "$ref": "#/components/schemas/Id" },
+          "parentProject": { "oneOf": [{ "$ref": "#/components/schemas/Id" }, { "type": "null" }] },
+          "ancestors": { "type": "array", "items": { "$ref": "#/components/schemas/Id" } }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "required": ["_id", "title", "workspace", "status", "completed"],
+        "properties": {
+          "_id": { "$ref": "#/components/schemas/Id" },
+          "title": { "type": "string", "maxLength": 120 },
+          "content": { "type": "string" },
+          "status": { "type": "string", "enum": ["todo", "in_progress", "done"] },
+          "completed": { "type": "boolean" },
+          "workspace": { "$ref": "#/components/schemas/Id" },
+          "project": { "oneOf": [{ "$ref": "#/components/schemas/Id" }, { "type": "null" }] },
+          "parentTask": { "oneOf": [{ "$ref": "#/components/schemas/Id" }, { "type": "null" }] },
+          "ancestors": { "type": "array", "items": { "$ref": "#/components/schemas/Id" } },
+          "priority": { "type": ["string", "null"], "enum": ["low", "medium", "high", null] }
+        }
+      },
+      "ContainerCreate": {
+        "type": "object",
+        "properties": {
+          "workspace": { "$ref": "#/components/schemas/Id" },
+          "project": { "$ref": "#/components/schemas/Id" }
+        }
+      },
+      "ProjectInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 120 },
+          "description": { "type": "string", "maxLength": 500 },
+          "workspace": { "$ref": "#/components/schemas/Id" },
+          "parentProject": { "$ref": "#/components/schemas/Id" },
+          "tags": { "type": "array", "maxItems": 10, "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["active", "blocked", "completed"] }
+        }
+      },
+      "TaskInput": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string", "maxLength": 120 },
+          "content": { "type": "string" },
+          "workspace": { "$ref": "#/components/schemas/Id" },
+          "project": { "$ref": "#/components/schemas/Id" },
+          "parentTask": { "oneOf": [{ "$ref": "#/components/schemas/Id" }, { "type": "null" }] },
+          "status": { "type": "string", "enum": ["todo", "in_progress", "done"] },
+          "completed": { "type": "boolean" },
+          "completeSubtasks": { "type": "boolean" },
+          "ifVersion": { "type": "integer" }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": { "description": "Invalid input", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unauthorized": { "description": "Authentication required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Forbidden": { "description": "Insufficient role", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "Missing or inaccessible resource", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Conflict": { "description": "Version, name, archive, or subtask conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "": {
+      "get": { "security": [], "summary": "Discover the API", "responses": { "200": { "description": "Discovery document" } } }
+    },
+    "/health": {
+      "get": { "security": [], "summary": "Health check", "responses": { "200": { "description": "Healthy" }, "503": { "description": "Database unavailable" } } }
+    },
+    "/auth/register": {
+      "post": {
+        "security": [],
+        "summary": "Register a human or agent account",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["username", "password"], "properties": { "username": { "type": "string" }, "password": { "type": "string" }, "isAgent": { "type": "boolean" } } } } } },
+        "responses": { "201": { "description": "Registered" }, "409": { "$ref": "#/components/responses/Conflict" } }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "security": [],
+        "summary": "Log in",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["username", "password"], "properties": { "username": { "type": "string" }, "password": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Token and account" }, "401": { "$ref": "#/components/responses/Unauthorized" } }
+      }
+    },
+    "/workspaces": {
+      "get": { "summary": "List owned and shared top-level workspaces", "responses": { "200": { "description": "Workspace lists" } } },
+      "post": {
+        "summary": "Create a top-level workspace",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string", "maxLength": 120 }, "description": { "type": "string", "maxLength": 500 }, "superWorkspace": { "$ref": "#/components/schemas/Id" } } } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Workspace" } } } } } }, "400": { "$ref": "#/components/responses/BadRequest" } }
+      }
+    },
+    "/workspaces/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }],
+      "get": { "summary": "Get a workspace", "responses": { "200": { "description": "Workspace" }, "404": { "$ref": "#/components/responses/NotFound" } } },
+      "patch": { "summary": "Update a workspace", "responses": { "200": { "description": "Updated" }, "409": { "$ref": "#/components/responses/Conflict" } } },
+      "delete": { "summary": "Move a workspace tree to trash", "responses": { "204": { "description": "Deleted" }, "400": { "$ref": "#/components/responses/BadRequest" } } }
+    },
+    "/projects": {
+      "get": {
+        "summary": "List projects",
+        "parameters": [
+          { "name": "workspace", "in": "query", "schema": { "$ref": "#/components/schemas/Id" } },
+          { "name": "parent", "in": "query", "schema": { "$ref": "#/components/schemas/Id" } },
+          { "name": "deep", "in": "query", "schema": { "type": "string", "enum": ["1"] } },
+          { "name": "archived", "in": "query", "schema": { "type": "string", "enum": ["only", "include"] } },
+          { "name": "tags", "in": "query", "schema": { "type": "string" } },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["az", "za", "newest", "oldest"] } }
+        ],
+        "responses": { "200": { "description": "Projects" } }
+      },
+      "post": {
+        "summary": "Create a project or sub-project",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectInput" } } } },
+        "responses": { "201": { "description": "Created" }, "400": { "$ref": "#/components/responses/BadRequest" } }
+      }
+    },
+    "/projects/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }],
+      "get": { "summary": "Get a project", "responses": { "200": { "description": "Project" } } },
+      "patch": { "summary": "Update project content or lifecycle status", "responses": { "200": { "description": "Updated" }, "409": { "$ref": "#/components/responses/Conflict" } } },
+      "delete": { "summary": "Move a project tree to trash", "responses": { "204": { "description": "Deleted" } } }
+    },
+    "/projects/{id}/move": {
+      "post": {
+        "summary": "Move a project tree within or between workspaces",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "parentProject": { "oneOf": [{ "$ref": "#/components/schemas/Id" }, { "type": "null" }] }, "workspace": { "$ref": "#/components/schemas/Id" } } } } } },
+        "responses": { "200": { "description": "Moved" }, "400": { "$ref": "#/components/responses/BadRequest" } }
+      }
+    },
+    "/projects/{id}/archive": {
+      "post": { "summary": "Archive a project tree", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }], "responses": { "200": { "description": "Archived" }, "409": { "$ref": "#/components/responses/Conflict" } } }
+    },
+    "/projects/{id}/restore": {
+      "post": { "summary": "Restore an archived project tree", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }], "responses": { "200": { "description": "Restored" }, "409": { "$ref": "#/components/responses/Conflict" } } }
+    },
+    "/tasks": {
+      "get": {
+        "summary": "List tasks with project roll-up by default",
+        "parameters": [
+          { "name": "workspace", "in": "query", "schema": { "$ref": "#/components/schemas/Id" } },
+          { "name": "project", "in": "query", "schema": { "$ref": "#/components/schemas/Id" } },
+          { "name": "own", "in": "query", "schema": { "type": "string", "enum": ["1"] } }
+        ],
+        "responses": { "200": { "description": "Tasks" } }
+      },
+      "post": { "summary": "Create a task or subtask", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TaskInput" } } } }, "responses": { "201": { "description": "Created" }, "400": { "$ref": "#/components/responses/BadRequest" } } }
+    },
+    "/tasks/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }],
+      "get": { "summary": "Get a task", "responses": { "200": { "description": "Task" } } },
+      "patch": { "summary": "Update, reparent, refile, complete, or reopen a task", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TaskInput" } } } }, "responses": { "200": { "description": "Updated" }, "409": { "$ref": "#/components/responses/Conflict" } } },
+      "delete": { "summary": "Move a task subtree to trash", "responses": { "204": { "description": "Deleted" } } }
+    },
+    "/goals": {
+      "get": { "summary": "List goals with roll-up by default", "responses": { "200": { "description": "Goals" } } },
+      "post": { "summary": "Create a workspace or project goal", "responses": { "201": { "description": "Created" } } }
+    },
+    "/notes": {
+      "get": { "summary": "List direct notes or include sub-projects", "parameters": [{ "name": "includeSubprojects", "in": "query", "schema": { "type": "string", "enum": ["1"] } }], "responses": { "200": { "description": "Notes" } } },
+      "post": { "summary": "Create a workspace or project note", "responses": { "201": { "description": "Created" } } }
+    },
+    "/links": {
+      "get": { "summary": "List direct links or include sub-projects", "parameters": [{ "name": "includeSubprojects", "in": "query", "schema": { "type": "string", "enum": ["1"] } }], "responses": { "200": { "description": "Links" } } },
+      "post": { "summary": "Create a workspace or project link", "responses": { "201": { "description": "Created" } } }
+    },
+    "/attachments": {
+      "get": { "summary": "List direct files or include sub-projects", "parameters": [{ "name": "includeSubprojects", "in": "query", "schema": { "type": "string", "enum": ["1"] } }], "responses": { "200": { "description": "Files" } } }
+    },
+    "/suggestions/{id}/approve": {
+      "post": {
+        "summary": "Approve a suggestion",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }],
+        "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "completeSubtasks": { "type": "boolean", "description": "After explicit confirmation, complete every unfinished descendant of a parent task." } } } } } },
+        "responses": { "200": { "description": "Approved" }, "409": { "$ref": "#/components/responses/Conflict" } }
+      }
+    },
+    "/memberships": {
+      "get": { "summary": "List grants owned by the caller", "responses": { "200": { "description": "Memberships" } } },
+      "post": {
+        "summary": "Invite an account at account or workspace scope",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["shareCode", "role", "scope"], "properties": { "shareCode": { "type": "string", "pattern": "^SF-[A-Z0-9]{8}$" }, "role": { "type": "string", "enum": ["reader", "suggester", "writer"] }, "scope": { "type": "string", "enum": ["none", "workspace"] }, "target": { "$ref": "#/components/schemas/Id" }, "expiresAt": { "type": "string", "format": "date-time" } } } } } },
+        "responses": { "201": { "description": "Pending invite" }, "400": { "$ref": "#/components/responses/BadRequest" } }
+      }
+    },
+    "/search": {
+      "get": { "summary": "Search visible non-archived content", "parameters": [{ "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Grouped results" } } }
+    },
+    "/trash": {
+      "get": { "summary": "List owner trash roots", "responses": { "200": { "description": "Trash" } } }
+    },
+    "/trash/{resourceType}/{id}/restore": {
+      "post": { "summary": "Restore a resource tree", "parameters": [{ "name": "resourceType", "in": "path", "required": true, "schema": { "type": "string", "enum": ["Workspace", "Project", "Task", "Note", "Goal", "Link", "Attachment"] } }, { "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }], "responses": { "200": { "description": "Restored" } }
+    }
+  }
+}
+}

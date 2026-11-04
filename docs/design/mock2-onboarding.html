@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — onboarding mock (mock2-onboarding)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* real tokens.css values — see docs/design/UX_PROPOSALS_2026-07-24.md B4 */
+    --navy: #003478; --navy-deep: #002A61; --navy-soft: #E9F0FB;
+    --accent: #0E9CD6; --accent-soft: #E1F2FA;
+    --border: #DDE3ED; --bg: #F4F6FA; --surface: #FFFFFF; --text: #16233A; --muted: #5C6670;
+    --white: #fff; --danger: #B42318;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-pill: 999px; --radius-card: 12px;
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-modal: 0 10px 30px rgba(0,0,0,0.2);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  .doc { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); font-weight: 500; }
+  .doc h1.doc-title { font-family: var(--font-display); font-size: 2rem; font-weight: 700; letter-spacing: -0.01em; margin: 0.25rem 0 0.4rem; }
+  .lede { color: var(--muted); max-width: 82ch; margin: 0 0 2rem; }
+  .lede b { color: var(--navy); }
+  .lede code { font-family: var(--font-mono); font-size: 0.85em; background: var(--navy-soft); padding: 0.1rem 0.35rem; border-radius: 4px; }
+
+  /* meta-annotation badges — same idiom as mock2-home: navy circle, mono
+     numeral, not part of the app's own color language (azure stays reserved
+     for in-app "you are here" states). */
+  .ann-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%; flex: none;
+    background: var(--navy); color: var(--white);
+    font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700;
+    box-shadow: 0 0 0 3px var(--surface), 0 0 0 4px var(--border);
+  }
+  .ann-pin { position: absolute; z-index: 3; }
+
+  .panels { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .frame { flex: 1 1 0; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface); }
+  .browser-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .browser-bar .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .browser-bar .url { margin-left: 0.4rem; font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .frame-label { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); padding: 0.7rem 1rem 0; }
+
+  .fviewport { padding: 1.25rem 1.25rem 1.5rem; min-height: 520px; }
+
+  /* ===== panel 1: login ===== */
+  .pitch { text-align: center; margin-bottom: 1.4rem; position: relative; }
+  .pitch .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; color: var(--text); display: inline-flex; align-items: center; gap: 0.5rem; }
+  .pitch .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--navy); display: inline-block; }
+  .pitch .statement { font-size: 0.85rem; color: var(--muted); margin: 0.6rem auto 1rem; max-width: 26rem; }
+  .pitch-bullets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; text-align: left; max-width: 20rem; margin: 0 auto; }
+  .pitch-bullets li { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; color: var(--text); }
+  .pitch-bullets .glyph { color: var(--navy); font-size: 0.95rem; width: 1.1rem; text-align: center; flex: none; }
+  .pitch .ann-pin { top: -0.5rem; right: -0.5rem; }
+
+  .auth { max-width: 21rem; margin: 1.5rem auto 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 1.4rem; box-shadow: var(--shadow-card); position: relative; }
+  .auth h2 { margin: 0 0 0.9rem; text-align: center; font-family: var(--font-display); font-size: 1.1rem; }
+  .auth label { display: block; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0.6rem 0 0.25rem; }
+  .auth input[type=text], .auth input[type=password] { width: 100%; font-family: var(--font-body); font-size: 0.88rem; padding: 0.5rem 0.65rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); }
+  .btn { font-family: var(--font-body); font-weight: 600; font-size: 0.85rem; border-radius: var(--radius-lg); padding: 0.45rem 0.9rem; cursor: pointer; border: 1px solid transparent; }
+  .btn-primary { background: var(--navy); color: var(--white); width: 100%; margin-top: 0.9rem; }
+  .auth p.link { text-align: center; font-size: 0.8rem; color: var(--muted); margin: 0.8rem 0 0; }
+  .auth p.link a { color: var(--navy); font-weight: 600; text-decoration: none; }
+
+  /* ===== panel 2: register ===== */
+  .checkbox-label { display: flex; align-items: center; gap: 0.5rem; margin: 0.9rem 0 0.3rem; font-size: 0.85rem; position: relative; }
+  .checkbox-label input { width: auto; }
+  .hint { color: var(--muted); font-size: 0.78rem; margin: 0 0 0.3rem; }
+
+  .defer-note { margin-top: 1.25rem; background: var(--accent-soft); border: 1px dashed #B3DCF0; border-radius: var(--radius-lg); padding: 0.75rem 0.85rem; font-size: 0.76rem; color: var(--text); position: relative; }
+  .defer-note .old { color: var(--muted); text-decoration: line-through; }
+  .defer-note .new { color: var(--navy); font-weight: 600; }
+
+  /* ===== panel 3: tour rework ===== */
+  .tscene { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 0.9rem; background: var(--bg); position: relative; margin-bottom: 1.1rem; }
+  .tscene:last-child { margin-bottom: 0; }
+  .tscene .scene-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.6rem; }
+
+  .mini-grid { display: flex; gap: 0.5rem; }
+  .mini-pcard { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.6rem 0.7rem; position: relative; }
+  .mini-pcard h5 { margin: 0; font-family: var(--font-display); font-size: 0.82rem; font-weight: 600; }
+  .mini-pcard.target { border: 2px solid var(--navy); box-shadow: 0 0 0 4px var(--navy-soft); }
+
+  .mini-tour-card { position: relative; margin-top: 0.9rem; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-modal); padding: 0.85rem 0.9rem; max-width: 15rem; }
+  .mini-tour-card::before { content: ""; position: absolute; top: -7px; left: 1rem; width: 12px; height: 12px; background: var(--surface); border-left: 1px solid var(--border); border-top: 1px solid var(--border); transform: rotate(45deg); }
+  .tour-dots { display: flex; gap: 0.3rem; margin-bottom: 0.5rem; }
+  .tour-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+  .tour-dot.active { background: var(--navy); }
+  .mini-tour-card h4 { margin: 0 0 0.3rem; font-family: var(--font-display); font-size: 0.85rem; }
+  .mini-tour-card p { margin: 0 0 0.5rem; font-size: 0.72rem; color: var(--muted); }
+  .step-count { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); position: absolute; top: 0.85rem; right: 0.9rem; }
+  .mini-tour-actions { display: flex; justify-content: space-between; }
+  .btn-ghost-mini { background: none; border: none; color: var(--navy); font-family: var(--font-body); font-weight: 600; font-size: 0.72rem; cursor: pointer; padding: 0; }
+  .btn-primary-mini { background: var(--navy); color: var(--white); font-family: var(--font-body); font-weight: 600; font-size: 0.72rem; border: none; border-radius: var(--radius-md); padding: 0.3rem 0.65rem; cursor: pointer; }
+
+  .mini-board { display: flex; gap: 0.5rem; }
+  .mini-col { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.5rem; }
+  .mini-col h6 { margin: 0 0 0.4rem; font-size: 0.7rem; font-weight: 600; color: var(--muted); }
+  .mini-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.3rem 0.4rem; font-size: 0.68rem; margin-bottom: 0.3rem; }
+
+  .tip-card { position: relative; margin-top: 0.7rem; background: var(--navy); color: var(--white); border-radius: var(--radius-lg); padding: 0.6rem 0.75rem; font-size: 0.74rem; display: flex; align-items: center; gap: 0.6rem; }
+  .tip-card button { background: rgba(255,255,255,0.15); color: var(--white); border: none; border-radius: var(--radius-md); padding: 0.25rem 0.55rem; font-family: var(--font-body); font-weight: 600; font-size: 0.68rem; cursor: pointer; white-space: nowrap; }
+
+  @media (max-width: 1180px) {
+    .panels { flex-direction: column; }
+    .frame { width: 100%; }
+  }
+
+  .notes { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 0.9rem; max-width: 900px; }
+  .note-item { display: flex; gap: 0.85rem; align-items: flex-start; background: var(--navy-soft); border-radius: var(--radius-lg); padding: 0.9rem 1.1rem; }
+  .note-item .ann-badge { margin-top: 0.15rem; }
+  .note-item h4 { margin: 0 0 0.3rem; font-family: var(--font-body); font-size: 0.92rem; font-weight: 700; color: var(--text); }
+  .note-item p { margin: 0; font-size: 0.85rem; color: var(--muted); }
+  .note-item code { font-family: var(--font-mono); font-size: 0.82em; background: var(--surface); border: 1px solid var(--border); padding: 0.05rem 0.3rem; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <span class="eyebrow">Proposal · mock2-onboarding · not implemented</span>
+  <h1 class="doc-title">Onboarding &amp; first-run (B4)</h1>
+  <p class="lede">Three moments from the same rated-3/10-clarity, rated-5/10-usefulness flow. <b>Login</b> finally says what Sofos is before asking for a password. <b>Register</b> explains the agent checkbox up front instead of after the fact, and no longer leads with the share code. <b>The tour</b> stops narrating five topics it can't show and instead points at three real things on Overview, handing the rest to small tips that fire the first time you actually open that surface. Numbered badges are annotations, not app UI — see the notes below.</p>
+
+  <div class="panels">
+
+    <!-- Panel 1: login -->
+    <div class="frame">
+      <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">sofos.app/login</span></div>
+      <div class="fviewport">
+        <div class="pitch">
+          <span class="ann-badge ann-pin">1</span>
+          <div class="wordmark"><span class="wp"></span>Sofos</div>
+          <p class="statement">Workspaces, projects and roadmaps for people and their agents.</p>
+          <ul class="pitch-bullets">
+            <li><span class="glyph">▦</span>Organize work in nested workspaces</li>
+            <li><span class="glyph">◎</span>See it as lists, boards or roadmap trails</li>
+            <li><span class="glyph">⇄</span>Share with people and AI agents — safely</li>
+          </ul>
+        </div>
+        <div class="auth">
+          <h2>Log in</h2>
+          <label>Username</label>
+          <input type="text" value="admin" readonly>
+          <label>Password</label>
+          <input type="password" value="••••••••••" readonly>
+          <button class="btn btn-primary">Log in</button>
+          <p class="link">No account? <a href="#">Register</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: register -->
+    <div class="frame">
+      <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">sofos.app/register</span></div>
+      <div class="fviewport">
+        <div class="auth" style="margin-top:0">
+          <h2>Register</h2>
+          <label>Username</label>
+          <input type="text" value="" placeholder="pick a username">
+          <label>Password</label>
+          <input type="password" value="" placeholder="at least 8 characters">
+          <label class="checkbox-label">
+            <span class="ann-badge ann-pin" style="top:-0.6rem; left:-0.6rem;">2</span>
+            <input type="checkbox">
+            Register as an agent account
+          </label>
+          <p class="hint">For AI/automation accounts — humans leave this off.</p>
+          <button class="btn btn-primary">Register</button>
+          <p class="link">Have an account? <a href="#">Log in</a></p>
+        </div>
+        <div class="defer-note">
+          <span class="ann-badge ann-pin" style="top:-0.6rem; right:-0.6rem;">3</span>
+          <span class="old">Today: share code shown immediately after registering, before you've done anything.</span><br>
+          <span class="new">Now: a plain "you're all set" welcome — the share code moves to the Sharing tip and Settings.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 3: tour rework -->
+    <div class="frame">
+      <div class="frame-label">Reworked tour — anchored steps + contextual tips</div>
+      <div class="fviewport" style="min-height:auto;">
+        <div class="tscene">
+          <span class="scene-tag">Overview — first visit, step 1 of 3</span>
+          <div class="mini-grid">
+            <div class="mini-pcard target"><h5>Home</h5></div>
+            <div class="mini-pcard"><h5>Ops</h5></div>
+          </div>
+          <div class="mini-tour-card">
+            <span class="ann-badge ann-pin" style="top:-0.7rem; right:-0.7rem;">4</span>
+            <span class="step-count">1 of 3</span>
+            <div class="tour-dots"><span class="tour-dot active"></span><span class="tour-dot"></span><span class="tour-dot"></span></div>
+            <h4>Home &amp; workspaces</h4>
+            <p>Every workspace you own, or that's shared with you, shows up here — like Home, right above.</p>
+            <div class="mini-tour-actions">
+              <button class="btn-ghost-mini">Skip</button>
+              <button class="btn-primary-mini">Next</button>
+            </div>
+          </div>
+          <span class="ann-badge ann-pin" style="position:static; display:inline-flex; margin-top:0.6rem;">5</span>
+        </div>
+
+        <div class="tscene">
+          <span class="scene-tag">Board page — opened for the first time</span>
+          <div class="mini-board">
+            <div class="mini-col"><h6>To do</h6><div class="mini-card">Compress hero images</div></div>
+            <div class="mini-col"><h6>Doing</h6><div class="mini-card">Draft launch email</div></div>
+            <div class="mini-col"><h6>Done</h6></div>
+          </div>
+          <div class="tip-card">
+            <span class="ann-badge ann-pin" style="top:-0.7rem; right:-0.7rem; background:var(--white); color:var(--navy);">6</span>
+            First time here: drag cards between columns to change status
+            <button>Got it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <div class="note-item">
+      <span class="ann-badge">1</span>
+      <div>
+        <h4>The login page finally says what Sofos is</h4>
+        <p>Today's login form is just a username/password box under the wordmark — nothing tells a new visitor what they're about to sign into. One sentence plus three glyph bullets, borrowed from the app's own existing glyph vocabulary (<code>▦</code> <code>◎</code> <code>⇄</code>, same family as the link/file glyphs already used on the workspace page), fixes the cheapest and most visible gap the fleet found: 3/10 first-impression clarity.</p>
+      </div>
+    </div>
+    <div class="note-item">
+      <span class="ann-badge">2</span>
+      <div>
+        <h4>The agent checkbox explains itself before you check it</h4>
+        <p>Today <code>RegisterPage.jsx</code> only renders the agent hint <em>after</em> the box is checked (<code>{form.isAgent &amp;&amp; &lt;p className="hint"&gt;...&lt;/p&gt;}</code>) — a human skimming the form never sees it unless they check the box out of curiosity. This mock makes the one-line helper — <b>"For AI/automation accounts — humans leave this off"</b> — always visible under the checkbox, so the decision is informed before it's made, not after.</p>
+      </div>
+    </div>
+    <div class="note-item">
+      <span class="ann-badge">3</span>
+      <div>
+        <h4>Share code deferred out of the first five minutes</h4>
+        <p>Today's post-register screen leads with the share code — the mechanism for something (being shared with) a brand-new account hasn't needed yet. Proposal: a plain confirmation instead, and the code moves to wherever sharing actually becomes relevant — a first-visit Sharing tip and Settings (where it's always been available regardless).</p>
+      </div>
+    </div>
+    <div class="note-item">
+      <span class="ann-badge">4</span>
+      <div>
+        <h4>Show, don't tell — the step points at something real</h4>
+        <p>Today's <code>Tour.jsx</code> has exactly one live anchor (<code>data-tour="workspaces"</code> on the sidebar's owned-workspaces list); the other four steps' <code>dataTour</code> is <code>null</code> and they fall back to a centered, floating card describing UI that isn't even mounted on Home. This mock anchors the step to the real workspace grid with a highlight ring, matching the anchoring logic that already exists in <code>anchorRect()</code>/<code>cardPosition()</code> — it just needs more steps willing to use it.</p>
+      </div>
+    </div>
+    <div class="note-item">
+      <span class="ann-badge">5</span>
+      <div>
+        <h4>Five steps become three, the rest become contextual tips</h4>
+        <p>The other four <code>STEPS</code> entries (boards, roadmap, suggestions, sharing) get cut from the first-boot tour and reborn as one-time dismissible tip cards that fire the first time each surface is actually opened — same seen-flag mechanism the tour already uses, just scoped per surface instead of front-loaded on day one. Cuts the tour to the 3 things Home can actually show: the workspaces grid, the seeded Home card, and the sidebar/trash.</p>
+      </div>
+    </div>
+    <div class="note-item">
+      <span class="ann-badge">6</span>
+      <div>
+        <h4>A contextual tip, in place</h4>
+        <p>This is what one of those five former tour steps looks like once it's moved: a small dismissible card on the Board page itself, the first time that page opens, saying only what's true right there — "drag cards between columns to change status" — with its own "Got it" and seen-flag, no unrelated collaboration jargon riding along.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

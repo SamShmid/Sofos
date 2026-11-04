@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofos — workspace page mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pine: #003478; --pine-soft: #E9F0FB; --blaze: #0E9CD6; --blaze-soft: #E1F2FA;
+    --paper: #F4F6FA; --card: #FFFFFF; --ink: #16233A; --muted: #5C6670; --mist: #DDE3ED; --danger: #B42318;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Public Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--blaze); outline-offset: 2px; border-radius: 4px; }
+
+  /* header — slim, paper, wordmark not slab */
+  header { background: var(--card); border-bottom: 1px solid var(--mist); padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--ink); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .wordmark .wp { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--pine); display: inline-block; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-right a { font-size: 0.88rem; color: var(--ink); text-decoration: none; font-weight: 500; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--pine); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.75rem; }
+
+  .app-body { display: flex; min-height: calc(100vh - 56px); }
+
+  /* sidebar — quiet list, not pills */
+  aside { width: 232px; flex: none; padding: 1.5rem 0.9rem; border-right: 1px solid var(--mist); }
+  .side-label { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 0.6rem; margin: 1.1rem 0 0.35rem; }
+  .side-label:first-child { margin-top: 0; }
+  aside a { display: flex; align-items: center; justify-content: space-between; padding: 0.42rem 0.6rem; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+  aside a:hover { background: var(--pine-soft); }
+  aside a.active { background: var(--pine); color: #fff; }
+  aside a .mini { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  aside a.active .mini { color: #CBD9EF; }
+  .side-add { color: var(--pine) !important; font-weight: 600; }
+
+  main { flex: 1; padding: 2.25rem 2.5rem; max-width: 1060px; }
+
+  .page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.25rem; }
+  h1 { font-family: var(--font-display); font-size: 2.1rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+  .page-desc { color: var(--muted); margin: 0 0 1.75rem; }
+  .btn { font-weight: 600; font-size: 0.85rem; border-radius: 8px; padding: 0.45rem 0.9rem; cursor: pointer; border: 1px solid transparent; font-family: var(--font-body); }
+  .btn-quiet { background: transparent; color: var(--pine); border-color: var(--mist); }
+  .btn-quiet:hover { background: var(--pine-soft); }
+  .btn-primary { background: var(--pine); color: #fff; }
+
+  .section-label { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pine); font-weight: 500; margin: 2rem 0 0.75rem; display: flex; align-items: center; gap: 0.6rem; }
+  .section-label::after { content: ""; flex: 1; border-top: 1px solid var(--mist); }
+
+  /* roadmap hero card — the workspace's route, drawn */
+  .route-card { display: block; background: var(--card); border: 1px solid var(--mist); border-radius: 12px; padding: 1.25rem 1.5rem 1.1rem; text-decoration: none; color: inherit; margin-bottom: 0.5rem; }
+  .route-card:hover { border-color: var(--pine); }
+  .route-card .rc-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.9rem; }
+  .route-card h2 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; margin: 0; }
+  .route-card .mini-label { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .route { display: flex; align-items: center; }
+  .leg { flex: 1; border-top: 3px dashed var(--mist); }
+  .leg.done { border-top: 3px solid var(--pine); }
+  .waypoint { width: 15px; height: 15px; border-radius: 50%; border: 3px solid var(--pine); background: var(--card); flex: none; }
+  .waypoint.done { background: var(--pine); }
+  .waypoint.current { border-color: var(--blaze); box-shadow: 0 0 0 4px var(--blaze-soft); }
+  .rc-next { margin-top: 0.8rem; font-size: 0.85rem; color: var(--muted); }
+  .rc-next b { color: var(--blaze); font-weight: 600; }
+
+  /* project grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.9rem; }
+  .pcard { background: var(--card); border: 1px solid var(--mist); border-radius: 12px; padding: 1rem 1.1rem; text-decoration: none; color: inherit; display: block; }
+  .pcard:hover { border-color: var(--pine); }
+  .pcard h3 { font-family: var(--font-display); font-size: 1.02rem; font-weight: 600; margin: 0 0 0.3rem; }
+  .pcard p { font-size: 0.83rem; color: var(--muted); margin: 0 0 0.7rem; min-height: 2.4em; }
+  .pcard .meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); display: flex; gap: 0.9rem; }
+  .pcard .meta .done { color: var(--pine); }
+  .pcard.shared::after { content: "shared with seedbot"; font-family: var(--font-mono); font-size: 0.65rem; color: var(--blaze); display: block; margin-top: 0.5rem; }
+  .pcard-new { border-style: dashed; display: flex; align-items: center; justify-content: center; color: var(--pine); font-weight: 600; font-size: 0.9rem; min-height: 108px; }
+  .pcard-new:hover { background: var(--pine-soft); }
+
+  /* links + files: two columns of rows */
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+  .row-list { list-style: none; margin: 0; padding: 0; }
+  .row-list li { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.6rem; border-radius: 8px; }
+  .row-list li:hover { background: var(--pine-soft); }
+  .row-list a { color: var(--ink); font-weight: 500; font-size: 0.9rem; text-decoration: underline; text-decoration-color: var(--mist); text-underline-offset: 3px; flex: 1; }
+  .row-list a:hover { text-decoration-color: var(--pine); }
+  .row-list .fname { color: var(--ink); font-weight: 500; font-size: 0.9rem; flex: 1; }
+  .row-list .meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .glyph { color: var(--pine); font-size: 0.9rem; width: 1.1rem; text-align: center; }
+  .add-inline { display: inline-block; margin-top: 0.4rem; color: var(--pine); font-weight: 600; font-size: 0.83rem; background: none; border: none; cursor: pointer; padding: 0.3rem 0.6rem; border-radius: 8px; }
+  .add-inline:hover { background: var(--pine-soft); }
+
+  /* suggestions inbox strip */
+  .sugg { background: var(--blaze-soft); border: 1px solid #B3DCF0; border-radius: 12px; padding: 0.9rem 1.1rem; display: flex; align-items: center; gap: 1rem; }
+  .sugg .op { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; background: var(--card); border: 1px solid var(--blaze); color: var(--blaze); padding: 0.15rem 0.5rem; border-radius: 99px; }
+  .sugg .what { flex: 1; font-size: 0.88rem; }
+  .sugg .what b { font-weight: 600; }
+  .sugg .who { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .btn-approve { background: var(--pine); color: #fff; }
+  .btn-reject { background: transparent; border-color: var(--mist); color: var(--muted); }
+
+  footer { text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 0.72rem; padding: 2rem; border-top: 1px solid var(--mist); margin-top: 3rem; }
+  @media (max-width: 800px) { aside { display: none; } .twocol { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <a class="wordmark" href="#"><span class="wp"></span>Sofos</a>
+  <div class="header-right"><a href="#">Settings</a><span class="avatar">AD</span></div>
+</header>
+<div class="app-body">
+  <aside>
+    <div class="side-label">Yours</div>
+    <a href="#">Home <span class="mini">2</span></a>
+    <a href="#" class="active">Work <span class="mini">3</span></a>
+    <a href="#" class="side-add">+ Workspace</a>
+    <div class="side-label">Shared with you</div>
+    <a href="#">Dana’s Studio <span class="mini">reader</span></a>
+    <div class="side-label">System</div>
+    <a href="#">Trash <span class="mini">2</span></a>
+  </aside>
+  <main>
+    <div class="page-head">
+      <h1>Work</h1>
+      <button class="btn btn-quiet">History</button>
+    </div>
+    <p class="page-desc">Admin’s shared demo workspace</p>
+
+    <a class="route-card" href="#">
+      <div class="rc-head">
+        <h2>Roadmap</h2>
+        <span class="mini-label">2 of 5 waypoints</span>
+      </div>
+      <div class="route">
+        <span class="waypoint done"></span><span class="leg done"></span>
+        <span class="waypoint done"></span><span class="leg done"></span>
+        <span class="waypoint current"></span><span class="leg"></span>
+        <span class="waypoint"></span><span class="leg"></span>
+        <span class="waypoint"></span>
+      </div>
+      <div class="rc-next">Next waypoint: <b>Hire first support engineer</b></div>
+    </a>
+
+    <div class="section-label">Projects · 3</div>
+    <div class="grid">
+      <a class="pcard" href="#">
+        <h3>General</h3>
+        <p>Unfiled tasks and ideas for this workspace</p>
+        <span class="meta"><span>4 tasks</span><span class="done">1 done</span></span>
+      </a>
+      <a class="pcard shared" href="#">
+        <h3>Website</h3>
+        <p>Demo project shared with the agent</p>
+        <span class="meta"><span>5 tasks</span><span class="done">2 done</span><span>3 goals</span></span>
+      </a>
+      <a class="pcard" href="#">
+        <h3>Marketing site</h3>
+        <p>Public marketing pages, separate from the app itself</p>
+        <span class="meta"><span>3 tasks</span><span class="done">1 done</span><span>2 goals</span></span>
+      </a>
+      <a class="pcard pcard-new" href="#">+ New project</a>
+    </div>
+
+    <div class="section-label">Needs your review · 1</div>
+    <div class="sugg">
+      <span class="op">create</span>
+      <span class="what">seedbot proposes a task: <b>“Compress hero images before launch”</b> in Website</span>
+      <span class="who">2m ago</span>
+      <button class="btn btn-approve">Approve</button>
+      <button class="btn btn-reject">Reject</button>
+    </div>
+
+    <div class="twocol">
+      <div>
+        <div class="section-label">Links · 2</div>
+        <ul class="row-list">
+          <li><span class="glyph">↗</span><a href="#">Company handbook</a><span class="meta">added Jul 19</span></li>
+          <li><span class="glyph">↗</span><a href="#">Design system</a><span class="meta">added Jul 20</span></li>
+        </ul>
+        <button class="add-inline">+ Link</button>
+      </div>
+      <div>
+        <div class="section-label">Files · 1</div>
+        <ul class="row-list">
+          <li><span class="glyph">⬒</span><span class="fname">logo-final-v3.png</span><span class="meta">1.2 MB · Jul 20</span></li>
+        </ul>
+        <button class="add-inline">+ File</button>
+      </div>
+    </div>
+  </main>
+</div>
+<footer>sofos · self-hosted · Samuel Shmidman @ 2026</footer>
+</body>
+</html>
